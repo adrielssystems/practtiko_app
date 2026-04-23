@@ -1,66 +1,32 @@
-import Image from "next/image";
-import styles from "./page.module.css";
-
 export default function Home() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.js file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div>
+      <header style={{ marginBottom: '2rem' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: 700 }}>Bienvenido al Panel de Control</h1>
+        <p style={{ color: 'var(--muted-foreground)' }}>Desde aquí puedes gestionar el contenido y SEO de tu sitio web.</p>
+      </header>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
+        <div style={{ padding: '1.5rem', background: '#18181b', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
+          <h3 style={{ fontSize: '0.875rem', textTransform: 'uppercase', color: 'var(--muted-foreground)', marginBottom: '0.5rem' }}>Páginas Totales</h3>
+          <p style={{ fontSize: '2rem', fontWeight: 700 }}>12</p>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div style={{ padding: '1.5rem', background: '#18181b', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
+          <h3 style={{ fontSize: '0.875rem', textTransform: 'uppercase', color: 'var(--muted-foreground)', marginBottom: '0.5rem' }}>Visitas SEO</h3>
+          <p style={{ fontSize: '2rem', fontWeight: 700 }}>1,240</p>
         </div>
-      </main>
+        <div style={{ padding: '1.5rem', background: '#18181b', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
+          <h3 style={{ fontSize: '0.875rem', textTransform: 'uppercase', color: 'var(--muted-foreground)', marginBottom: '0.5rem' }}>Estado del Sitio</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#22c55e', fontWeight: 600 }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e' }}></span>
+            Online
+          </div>
+        </div>
+      </div>
+
+      <div style={{ marginTop: '3rem' }}>
+        <button className="btn-primary">Nueva Publicación</button>
+      </div>
     </div>
   );
 }
