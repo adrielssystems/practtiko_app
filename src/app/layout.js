@@ -12,8 +12,8 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "Practtiko App - Autogestión",
-  description: "Panel de administración y autogestión de Practtiko.",
+  title: "Practiiko App - Autogestión",
+  description: "Panel de administración y autogestión de Practiiko.",
 };
 
 export default function RootLayout({ children }) {
@@ -22,7 +22,7 @@ export default function RootLayout({ children }) {
       <body>
         <div className="dashboard-layout">
           <aside className="sidebar">
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '2rem' }}>Practtiko Admin</h2>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '2rem' }}>Practiiko Admin</h2>
             <nav style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <a href="/dashboard" style={{ opacity: 0.7 }}>Dashboard</a>
               <a href="/content" style={{ opacity: 0.7 }}>Contenido</a>
