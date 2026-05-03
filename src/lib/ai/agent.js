@@ -49,67 +49,73 @@ FECHA Y HORA ACTUAL (Venezuela): {now}
 `;
 
 export async function processChatMessage(message, sessionId, source = 'dm', commentId = null) {
-  // 1. Cargar historial desde la base de datos
-  const historyRes = await query(
-    `SELECT message FROM instagram_messages WHERE session_id = $1 ORDER BY created_at ASC LIMIT 10`,
-    [sessionId]
-  );
-  
-  const chatHistory = historyRes.rows.map(row => {
-    const msg = row.message;
-    return msg.role === 'user' ? new HumanMessage(msg.content) : new AIMessage(msg.content);
-  });
+  try {
+    // 1. Obtener historial reciente de la tabla correspondiente
+    const tableName = source === 'whatsapp' ? 'whatsapp_messages' : 'instagram_messages';
+    const historyRes = await query(
+      `SELECT message FROM ${tableName} WHERE session_id = $1 ORDER BY created_at DESC LIMIT 6`,
+      [sessionId]
+    );
+    
+    const chatHistory = historyRes.rows.map(r => typeof r.message === 'string' ? JSON.parse(r.message) : r.message).map(msg => msg.role === 'user' ? new HumanMessage(msg.content) : new AIMessage(msg.content)).reverse();
 
-  // Intentar cargar el prompt personalizado desde la DB
-  const settingsRes = await query("SELECT value FROM app_settings WHERE key = 'ai_prompt'");
-  const dynamicSystemMessage = settingsRes.rows[0]?.value || SYSTEM_MESSAGE;
+    // Intentar cargar el prompt personalizado desde la DB
+    const settingsRes = await query("SELECT value FROM app_settings WHERE key = 'ai_prompt'");
+    const dynamicSystemMessage = settingsRes.rows[0]?.value || SYSTEM_MESSAGE;
 
-  const model = new ChatOpenAI({
-    openAIApiKey: process.env.DEEPSEEK_API_KEY || "dummy_key_for_build",
-    configuration: {
-      baseURL: process.env.DEEPSEEK_API_URL || "https://api.deepseek.com",
-    },
-    modelName: "deepseek-chat",
-    temperature: 0.1, // Reducimos temperatura para ser más estrictos
-  });
+    const model = new ChatOpenAI({
+      openAIApiKey: process.env.DEEPSEEK_API_KEY || "dummy_key_for_build",
+      configuration: {
+        baseURL: process.env.DEEPSEEK_API_URL || "https://api.deepseek.com",
+      },
+      modelName: "deepseek-chat",
+      temperature: 0.1, // Reducimos temperatura para ser más estrictos
+    });
 
-  const prompt = ChatPromptTemplate.fromMessages([
-    ["system", dynamicSystemMessage],
-    new MessagesPlaceholder("chat_history"),
-    ["human", "{input}"],
-    new MessagesPlaceholder("agent_scratchpad"),
-  ]);
+    const prompt = ChatPromptTemplate.fromMessages([
+      ["system", dynamicSystemMessage],
+      new MessagesPlaceholder("chat_history"),
+      ["human", "{input}"],
+      new MessagesPlaceholder("agent_scratchpad"),
+    ]);
 
-  const agent = await createOpenAIFunctionsAgent({
-    llm: model,
-    tools,
-    prompt,
-  });
+    const agent = await createOpenAIFunctionsAgent({
+      llm: model,
+      tools,
+      prompt,
+    });
 
-  const executor = new AgentExecutor({
-    agent,
-    tools,
-  });
+    const executor = new AgentExecutor({
+      agent,
+      tools,
+    });
 
-  const result = await executor.invoke({
-    input: message,
-    chat_history: chatHistory,
-    now: new Date().toLocaleString('es-VE', { timeZone: 'America/Caracas' }),
-  });
+    const result = await executor.invoke({
+      input: message,
+      chat_history: chatHistory,
+      now: new Date().toLocaleString('es-VE', { timeZone: 'America/Caracas' }),
+    });
 
-  const aiResponse = result.output;
+    const aiResponse = result.output;
 
-  // 2. Guardar mensaje del usuario y respuesta de la IA en la DB
-  await query(
-    `INSERT INTO instagram_messages (session_id, message, source, comment_id) VALUES ($1, $2, $3, $4), ($1, $5, $3, $4)`,
-    [
-      sessionId, 
-      JSON.stringify({ role: 'user', content: message }), 
-      source,
-      commentId,
-      JSON.stringify({ role: 'assistant', content: aiResponse })
-    ]
-  );
+    // 2. Guardar en la tabla correspondiente
+    // Nota: El webhook de WhatsApp ya guarda los mensajes, pero lo dejamos aquí por si se llama desde el simulador
+    if (source !== 'whatsapp' || sessionId.startsWith('simul')) {
+      await query(
+        `INSERT INTO ${tableName} (session_id, message, source, comment_id) VALUES ($1, $2, $3, $4), ($1, $5, $3, $4)`,
+        [
+          sessionId, 
+          JSON.stringify({ role: 'user', content: message }), 
+          source === 'whatsapp' ? 'whatsapp' : source,
+          commentId,
+          JSON.stringify({ role: 'assistant', content: aiResponse })
+        ]
+      );
+    }
 
-  return aiResponse;
+    return aiResponse;
+  } catch (error) {
+    console.error("[AGENT ERROR]:", error);
+    return "Lo siento, tuve un problema técnico. ¿Podría repetirme su consulta? 💎";
+  }
 }

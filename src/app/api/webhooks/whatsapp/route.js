@@ -1,0 +1,95 @@
+import { NextResponse } from "next/server";
+import { query } from "@/lib/db";
+import { processChatMessage } from "@/lib/ai/agent";
+
+// Configuración de Evolution API desde variables de entorno
+const EVO_URL = process.env.EVOLUTION_API_URL;
+const EVO_KEY = process.env.EVOLUTION_API_KEY;
+const EVO_INSTANCE = process.env.EVOLUTION_INSTANCE || "Practiiko";
+
+async function sendWhatsAppMessage(to, text) {
+  try {
+    const response = await fetch(`${EVO_URL}/message/sendText/${EVO_INSTANCE}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': EVO_KEY
+      },
+      body: JSON.stringify({
+        number: to,
+        text: text,
+        delay: 1200, // Simular escritura
+        linkPreview: true
+      })
+    });
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("[EVOLUTION SEND ERROR]:", error);
+  }
+}
+
+export async function POST(req) {
+  try {
+    const body = await req.json();
+    
+    // Loguear el webhook para monitoreo (opcional, pero útil al principio)
+    await query("INSERT INTO webhook_logs (source, payload) VALUES ($1, $2)", ['whatsapp', JSON.stringify(body)]);
+
+    // Evolution API envía eventos con el campo "event"
+    const eventType = body.event;
+    
+    if (eventType === "messages.upsert") {
+      const messageData = body.data;
+      const key = messageData.key;
+      const remoteJid = key.remoteJid;
+      const fromMe = key.fromMe;
+      
+      // 1. FILTRO CRÍTICO: Ignorar si el mensaje lo envió el bot (fromMe) o si no es de un chat individual
+      if (fromMe || !remoteJid.includes('@s.whatsapp.net')) {
+        return NextResponse.json({ status: "ignored" });
+      }
+
+      // 2. Extraer el texto del mensaje
+      const userMessage = messageData.message?.conversation || 
+                          messageData.message?.extendedTextMessage?.text || 
+                          "";
+
+      if (!userMessage) return NextResponse.json({ status: "no_text" });
+
+      const senderNumber = remoteJid.split('@')[0];
+      const pushName = messageData.pushName || "Cliente WhatsApp";
+
+      console.log(`[WHATSAPP] Mensaje de ${pushName} (${senderNumber}): ${userMessage}`);
+
+      // 3. Guardar/Actualizar cliente
+      await query(
+        `INSERT INTO whatsapp_customers (id, push_name, last_seen) 
+         VALUES ($1, $2, NOW()) 
+         ON CONFLICT (id) DO UPDATE SET push_name = $2, last_seen = NOW()`,
+        [senderNumber, pushName]
+      );
+
+      // 4. Procesar con IA y responder (en segundo plano para no bloquear el webhook)
+      processChatMessage(userMessage, senderNumber, 'whatsapp').then(async (aiResponse) => {
+        // Enviar a WhatsApp
+        await sendWhatsAppMessage(senderNumber, aiResponse);
+        
+        // Guardar en historial
+        await query(
+          `INSERT INTO whatsapp_messages (session_id, message) VALUES ($1, $2), ($1, $3)`,
+          [
+            senderNumber, 
+            JSON.stringify({ role: 'user', content: userMessage }),
+            JSON.stringify({ role: 'assistant', content: aiResponse })
+          ]
+        );
+      }).catch(e => console.error("[ERROR WHATSAPP AI]:", e));
+    }
+
+    return NextResponse.json({ status: "success" });
+  } catch (error) {
+    console.error("[WHATSAPP WEBHOOK ERROR]:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

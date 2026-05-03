@@ -1,7 +1,8 @@
 import { query } from "@/lib/db";
 export const dynamic = "force-dynamic";
 import Link from "next/link";
-import { MessageSquare, Phone, Clock, User, ChevronRight } from "lucide-react";
+import { MessageSquare, Clock, User, ChevronRight, Settings, Activity, Trash2, Smartphone } from "lucide-react";
+import DeleteChatButton from "@/components/Instagram/DeleteChatButton"; // Reutilizamos el botón de borrar
 
 async function getConversations() {
   try {
@@ -9,69 +10,125 @@ async function getConversations() {
       SELECT 
         session_id, 
         MAX(created_at) as last_message,
-        COUNT(*) as total_messages
-      FROM tiiko_whatsapp_memory
+        COUNT(*) as total_messages,
+        (SELECT push_name FROM whatsapp_customers WHERE id = session_id LIMIT 1) as push_name
+      FROM whatsapp_messages
       GROUP BY session_id
       ORDER BY last_message DESC
       LIMIT 20
     `);
     return res.rows;
   } catch (e) {
-    console.error("Error fetching whatsapp conversations:", e);
+    console.error(e);
     return [];
   }
 }
 
-export default async function WhatsAppMonitoringPage() {
+export default async function WhatsAppPage() {
   const conversations = await getConversations();
 
   return (
-    <div>
-      <header style={{ marginBottom: '2.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-          <div style={{ background: '#25D366', padding: '0.5rem', borderRadius: '12px', display: 'flex' }}>
-            <Phone color="white" size={24} />
-          </div>
-          <h1 style={{ fontSize: '2.25rem', fontWeight: 800, letterSpacing: '-0.025em' }}>Monitoreo WhatsApp</h1>
+    <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
+        <div>
+          <h1 style={{ fontSize: '2.25rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <Smartphone size={36} color="#25D366" /> Monitoreo WhatsApp
+          </h1>
+          <p style={{ color: 'var(--muted-foreground)', marginTop: '0.5rem' }}>
+            Supervisa las conversaciones de Evolution API en tiempo real.
+          </p>
         </div>
-        <p style={{ color: 'var(--muted-foreground)', fontSize: '1.1rem' }}>
-          Supervisa las conversaciones del canal de WhatsApp.
-        </p>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <Link href="/instagram/logs" className="btn-primary" style={{ background: 'none', border: '1px solid #ddd', color: '#666', boxShadow: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+            <Activity size={16} /> Ver Consola de Logs
+          </Link>
+        </div>
       </header>
 
-      <div className="grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.5rem' }}>
         {conversations.length === 0 ? (
           <div className="card glass" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '4rem' }}>
-            <MessageSquare size={48} style={{ color: 'var(--muted-foreground)', marginBottom: '1rem', opacity: 0.5 }} />
-            <h3>No hay conversaciones de WhatsApp</h3>
-            <p style={{ color: 'var(--muted-foreground)' }}>Las charlas de WhatsApp aparecerán aquí una vez que se reciban mensajes.</p>
+            <Smartphone size={48} style={{ margin: '0 auto 1rem', opacity: 0.2 }} />
+            <p style={{ color: 'var(--muted-foreground)' }}>Las charlas de WhatsApp aparecerán aquí una vez que Evolution API esté conectada.</p>
           </div>
         ) : (
           conversations.map((conv) => (
             <Link key={conv.session_id} href={`/whatsapp/${conv.session_id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="card glass conversation-card" style={{ 
                 padding: '1.5rem', 
-                transition: 'all 0.2s', 
-                cursor: 'pointer',
-                display: 'block' 
+                borderRadius: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+                transition: 'all 0.3s ease',
+                background: 'white',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                border: '1px solid #f0f0f0'
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '20px', background: '#25D366', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                      <Phone size={20} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, overflow: 'hidden' }}>
+                    <div style={{ 
+                      width: '48px', 
+                      height: '48px', 
+                      borderRadius: '14px', 
+                      background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      color: 'white',
+                      flexShrink: 0
+                    }}>
+                      <User size={24} />
                     </div>
-                    <div>
-                      <h4 style={{ margin: 0, fontWeight: 700 }}>Tel: {conv.session_id}</h4>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <Clock size={12} /> {new Date(conv.last_message).toLocaleString()}
-                      </span>
+                    <div style={{ overflow: 'hidden' }}>
+                      <h4 style={{ 
+                        margin: 0, 
+                        fontWeight: 700, 
+                        fontSize: '1rem',
+                        color: '#1a1a1a',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {conv.push_name || `+${conv.session_id}`}
+                      </h4>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem' }}>
+                        <Clock size={12} /> {new Date(conv.last_message).toLocaleString('es-VE', { timeZone: 'America/Caracas', hour: '2-digit', minute: '2-digit' })}
+                      </div>
                     </div>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <DeleteChatButton sessionId={conv.session_id} />
+                      <div style={{ 
+                        background: 'rgba(37, 211, 102, 0.1)', 
+                        color: '#128C7E', 
+                        padding: '0.25rem 0.6rem', 
+                        borderRadius: '8px', 
+                        fontSize: '0.7rem', 
+                        fontWeight: 800
+                      }}>
+                        {conv.total_messages} MSG
+                      </div>
+                    </div>
+                    <span style={{ fontSize: '0.6rem', background: '#25D366', color: 'white', padding: '2px 8px', borderRadius: '6px', fontWeight: 800, textTransform: 'uppercase' }}>WhatsApp</span>
                   </div>
                 </div>
                 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', color: '#128C7E', fontSize: '0.875rem', fontWeight: 600 }}>
-                  Ver historial
-                  <ChevronRight size={16} />
+                <div style={{ 
+                  marginTop: '0.5rem',
+                  paddingTop: '1rem',
+                  borderTop: '1px solid #f5f5f5',
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center', 
+                  color: '#128C7E', 
+                  fontSize: '0.85rem', 
+                  fontWeight: 600 
+                }}>
+                  Ver chat completo
+                  <ChevronRight size={18} />
                 </div>
               </div>
             </Link>
