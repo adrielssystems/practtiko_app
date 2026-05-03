@@ -11,6 +11,7 @@ export default function EditProductPage() {
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
@@ -21,6 +22,21 @@ export default function EditProductPage() {
     stock: "0",
     images: []
   });
+
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch("/api/categories");
+        if (res.ok) {
+          const data = await res.json();
+          setCategories(data);
+        }
+      } catch (e) {
+        console.error("Error fetching categories:", e);
+      }
+    }
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     async function fetchProduct() {
@@ -193,9 +209,9 @@ export default function EditProductPage() {
                   onChange={(e) => setFormData({...formData, category_id: e.target.value})}
                 >
                   <option value="">Seleccionar categoría</option>
-                  <option value="1">Sofás</option>
-                  <option value="2">Mesas</option>
-                  <option value="3">Accesorios</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
                 </select>
               </div>
             </div>

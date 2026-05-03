@@ -22,6 +22,22 @@ export default function NewProductPage() {
     images: []
   });
 
+  // Fetch categories
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch("/api/categories");
+        if (res.ok) {
+          const data = await res.json();
+          setCategories(data);
+        }
+      } catch (e) {
+        console.error("Error fetching categories:", e);
+      }
+    }
+    fetchCategories();
+  }, []);
+
   // Auto-generate slug from name
   useEffect(() => {
     const slug = formData.name
@@ -143,9 +159,9 @@ export default function NewProductPage() {
                   onChange={(e) => setFormData({...formData, category_id: e.target.value})}
                 >
                   <option value="">Seleccionar categoría</option>
-                  <option value="1">Sofás</option>
-                  <option value="2">Mesas</option>
-                  <option value="3">Accesorios</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
                 </select>
               </div>
             </div>
