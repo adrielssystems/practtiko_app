@@ -81,6 +81,10 @@ export async function processChatMessage(message, sessionId) {
     new MessagesPlaceholder("agent_scratchpad"),
   ]);
 
+  // Intentar cargar el prompt personalizado desde la DB
+  const settingsRes = await query("SELECT value FROM tiiko_settings WHERE key = 'ai_prompt'");
+  const dynamicSystemMessage = settingsRes.rows[0]?.value || SYSTEM_MESSAGE;
+
   const model = new ChatOpenAI({
     openAIApiKey: process.env.DEEPSEEK_API_KEY || "dummy_key_for_build",
     configuration: {
@@ -89,6 +93,13 @@ export async function processChatMessage(message, sessionId) {
     modelName: "deepseek-chat",
     temperature: 0.3,
   });
+
+  const prompt = ChatPromptTemplate.fromMessages([
+    ["system", dynamicSystemMessage],
+    new MessagesPlaceholder("chat_history"),
+    ["human", "{input}"],
+    new MessagesPlaceholder("agent_scratchpad"),
+  ]);
 
   const agent = await createOpenAIFunctionsAgent({
     llm: model,

@@ -1,7 +1,7 @@
 import { query } from "@/lib/db";
 export const dynamic = "force-dynamic";
 import Link from "next/link";
-import { MessageSquare, MessageCircle, Clock, User, ChevronRight } from "lucide-react";
+import { MessageSquare, MessageCircle, Clock, User, ChevronRight, Settings } from "lucide-react";
 
 async function getConversations() {
   try {
@@ -27,16 +27,22 @@ export default async function InstagramMonitoringPage() {
 
   return (
     <div>
-      <header style={{ marginBottom: '2.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-          <div style={{ background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)', padding: '0.5rem', borderRadius: '12px', display: 'flex' }}>
-            <MessageCircle color="white" size={24} />
+      <header style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+            <div style={{ background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)', padding: '0.5rem', borderRadius: '12px', display: 'flex' }}>
+              <MessageCircle color="white" size={24} />
+            </div>
+            <h1 style={{ fontSize: '2.25rem', fontWeight: 800, letterSpacing: '-0.025em' }}>Monitoreo Instagram</h1>
           </div>
-          <h1 style={{ fontSize: '2.25rem', fontWeight: 800, letterSpacing: '-0.025em' }}>Monitoreo Instagram</h1>
+          <p style={{ color: 'var(--muted-foreground)', fontSize: '1.1rem' }}>
+            Supervisa las conversaciones en tiempo real entre tus clientes y el Agente Virtual de Practiiko.
+          </p>
         </div>
-        <p style={{ color: 'var(--muted-foreground)', fontSize: '1.1rem' }}>
-          Supervisa las conversaciones en tiempo real entre tus clientes y el Agente Virtual de Practiiko.
-        </p>
+        <Link href="/instagram/config" className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+          <Settings size={18} />
+          Configurar IA
+        </Link>
       </header>
 
       <div className="grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
