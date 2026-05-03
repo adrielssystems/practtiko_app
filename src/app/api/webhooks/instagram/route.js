@@ -9,13 +9,21 @@ export async function GET(req) {
   const token = searchParams.get("hub.verify_token");
   const challenge = searchParams.get("hub.challenge");
 
-  // Puedes cambiar este token por uno más seguro en tus variables de entorno
-  const VERIFY_TOKEN = process.env.INSTAGRAM_VERIFY_TOKEN || "practiiko_token_2025";
+  const VERIFY_TOKEN = process.env.INSTAGRAM_VERIFY_TOKEN;
+
+  console.log("--- INTENTO DE VALIDACIÓN DE WEBHOOK ---");
+  console.log("Token esperado (Easypanel):", VERIFY_TOKEN);
+  console.log("Token recibido (Meta):", token);
+  console.log("Modo:", mode);
 
   if (mode === "subscribe" && token === VERIFY_TOKEN) {
-    return new Response(challenge, { status: 200 });
+    console.log("✅ Webhook Validado con éxito");
+    return new Response(challenge, {
+      headers: { 'Content-Type': 'text/plain' }
+    });
   }
 
+  console.error("❌ Fallo en la validación del Webhook: Tokens no coinciden");
   return new Response("Forbidden", { status: 403 });
 }
 
