@@ -2,6 +2,7 @@ import { query } from "@/lib/db";
 export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { ChevronLeft, User, Smartphone, Clock } from "lucide-react";
+import AutoRefresh from "@/components/Common/AutoRefresh";
 
 async function getChatMessages(id) {
   try {
@@ -32,6 +33,7 @@ export default async function WhatsAppChatPage({ params }) {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto', height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <AutoRefresh interval={5000} />
       <header style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
         <Link href="/whatsapp" style={{ color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center' }}>
           <ChevronLeft size={24} />

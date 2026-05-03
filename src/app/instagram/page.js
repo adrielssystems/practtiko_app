@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { MessageSquare, MessageCircle, Clock, User, ChevronRight, Settings, Activity, Trash2 } from "lucide-react";
 import BotSimulator from "@/components/Instagram/BotSimulator";
+import AutoRefresh from "@/components/Common/AutoRefresh";
 
 // Componente del botón de borrar para manejar el estado del lado del cliente
 import DeleteChatButton from "@/components/Instagram/DeleteChatButton";
@@ -34,6 +35,7 @@ export default async function InstagramMonitoringPage() {
 
   return (
     <div>
+      <AutoRefresh interval={5000} />
       <header style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>

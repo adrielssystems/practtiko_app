@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { MessageSquare, Clock, User, ChevronRight, Settings, Activity, Trash2, Smartphone } from "lucide-react";
 import DeleteChatButton from "@/components/Instagram/DeleteChatButton"; // Reutilizamos el botón de borrar
+import AutoRefresh from "@/components/Common/AutoRefresh";
 
 async function getConversations() {
   try {
@@ -29,6 +30,7 @@ export default async function WhatsAppPage() {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+      <AutoRefresh interval={5000} />
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
         <div>
           <h1 style={{ fontSize: '2.25rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '1rem' }}>

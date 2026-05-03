@@ -2,6 +2,7 @@ import { query } from "@/lib/db";
 export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { ArrowLeft, User, Bot, Clock } from "lucide-react";
+import AutoRefresh from "@/components/Common/AutoRefresh";
 
 async function getChatHistory(sessionId) {
   try {
@@ -33,6 +34,7 @@ export default async function InstagramDetailPage({ params }) {
 
   return (
     <div>
+      <AutoRefresh interval={5000} />
       <header style={{ marginBottom: '2rem' }}>
         <Link href="/instagram" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--muted-foreground)', textDecoration: 'none', marginBottom: '1rem' }}>
           <ArrowLeft size={16} />
