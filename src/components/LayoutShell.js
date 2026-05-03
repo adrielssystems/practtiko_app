@@ -8,7 +8,10 @@ import {
   Settings, 
   LogOut,
   ChevronRight,
-  Users
+  Users,
+  MessageCircle,
+  MessageSquare,
+  User
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 
