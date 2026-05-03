@@ -134,7 +134,7 @@ export default function SettingsPage() {
           <div style={{ marginTop: '2rem', padding: '1.5rem', background: '#f8f9fa', borderRadius: '20px', border: '1px dashed #ddd' }}>
             <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.8rem', fontWeight: 800, color: '#999', textTransform: 'uppercase' }}>Resumen de IA</h4>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#128C7E', fontWeight: 700, fontSize: '0.9rem' }}>
-              <Zap size={14} /> Activo: DeepSeek-V3
+              <Zap size={14} /> Activo: DeepSeek-V4 Flash
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#666', fontSize: '0.8rem', marginTop: '0.5rem' }}>
               <Globe size={14} /> Latencia: ~1.2s
