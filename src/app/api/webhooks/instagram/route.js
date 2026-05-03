@@ -36,21 +36,23 @@ export async function POST(req) {
       for (const entry of body.entry) {
         // --- 1. PROCESAR MENSAJES (DMs) ---
         if (entry.messaging) {
+          const pageId = entry.id; // El ID de la página de Practiiko
+
           for (const messaging of entry.messaging) {
-            // FILTRO DE SEGURIDAD: Ignorar si es un eco o si no tiene texto
+            const senderId = messaging.sender?.id;
+            
+            // FILTRO CRÍTICO: Si el remitente es la misma página, es un eco. IGNORAR.
+            if (senderId === pageId) {
+              console.log("[WEBHOOK] Mensaje propio de la página detectado. Ignorando para evitar bucle.");
+              continue;
+            }
+
             if (messaging.message?.is_echo === true) {
-              console.log("[WEBHOOK] Ignorando eco del sistema.");
               continue;
             }
 
             if (messaging.message?.text) {
-              const senderId = messaging.sender.id;
-              const recipientId = messaging.recipient.id;
               const userMessage = messaging.message.text;
-
-              // Si el remitente es el mismo que el destinatario (o la página), ignorar
-              if (senderId === recipientId) continue;
-
               console.log(`[INSTAGRAM DM] Nuevo mensaje de ${senderId}: ${userMessage}`);
 
               // Obtener info del usuario y guardar en DB
