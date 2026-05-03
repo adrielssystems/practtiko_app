@@ -37,7 +37,7 @@ export default function LayoutShell({ children }) {
     <div className="dashboard-layout">
       <aside className="sidebar">
           <div className="sidebar-logo">
-            <img src="/logo.png" alt="Practiiko" style={{ height: '32px' }} />
+            <img src="/logo.png" alt="Practiiko" style={{ height: '60px', width: 'auto', objectFit: 'contain' }} />
           </div>
         
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
