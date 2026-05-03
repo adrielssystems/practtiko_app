@@ -74,12 +74,7 @@ export async function processChatMessage(message, sessionId) {
     return msg.role === 'user' ? new HumanMessage(msg.content) : new AIMessage(msg.content);
   });
 
-  const prompt = ChatPromptTemplate.fromMessages([
-    ["system", SYSTEM_MESSAGE],
-    new MessagesPlaceholder("chat_history"),
-    ["human", "{input}"],
-    new MessagesPlaceholder("agent_scratchpad"),
-  ]);
+
 
   // Intentar cargar el prompt personalizado desde la DB
   const settingsRes = await query("SELECT value FROM tiiko_settings WHERE key = 'ai_prompt'");
