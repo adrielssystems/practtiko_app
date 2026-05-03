@@ -1,312 +1,130 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { query } from "@/lib/db";
+export const dynamic = "force-dynamic";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, Loader2, Trash2 } from "lucide-react";
-import ImageUpload from "@/components/Products/ImageUpload";
+import { ArrowLeft, Save, Package } from "lucide-react";
 
-export default function EditProductPage() {
-  const router = useRouter();
-  const { id } = useParams();
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [categories, setCategories] = useState([]);
-  
-  const [formData, setFormData] = useState({
-    name: "",
-    code: "",
-    slug: "",
-    description: "",
-    price_bcv: "",
-    price_cash: "",
-    category_id: "",
-    status: "draft",
-    stock: "0",
-    images: []
-  });
+async function getProduct(id) {
+    try {
+        const res = await query("SELECT * FROM products WHERE id = $1", [id]);
+        return res.rows[0];
+    } catch (e) {
+        console.error("Error fetching product:", e);
+        return null;
+    }
+}
 
-  useEffect(() => {
-    async function fetchCategories() {
-      try {
-        const res = await fetch("/api/categories");
-        if (res.ok) {
-          const data = await res.json();
-          setCategories(data);
-        }
-      } catch (e) {
+async function getCategories() {
+    try {
+        const res = await query("SELECT id, name FROM categories ORDER BY name ASC");
+        return res.rows;
+    } catch (e) {
         console.error("Error fetching categories:", e);
-      }
+        return [];
     }
-    fetchCategories();
-  }, []);
+}
 
-  useEffect(() => {
-    async function fetchProduct() {
-      try {
-        const res = await fetch(`/api/products/${id}`);
-        if (!res.ok) throw new Error("Product not found");
-        const data = await res.json();
-        setFormData({
-          ...data,
-          price_bcv: data.price_bcv?.toString() || "",
-          price_cash: data.price_cash?.toString() || "",
-          stock: data.stock?.toString() || "0",
-          category_id: data.category_id || ""
-        });
-      } catch (error) {
-        console.error("Error fetching product:", error);
-        alert("Error al cargar el producto");
-        router.push("/products");
-      } finally {
-        setLoading(false);
-      }
+export default async function EditProductPage({ params }) {
+    const { id } = await params;
+    const product = await getProduct(id);
+    const categories = await getCategories();
+
+    if (!product) {
+        return <div>Producto no encontrado</div>;
     }
-    fetchProduct();
-  }, [id, router]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSaving(true);
+    async function updateProduct(formData) {
+        "use server";
+        
+        const name = formData.get("name");
+        const code = formData.get("code");
+        const description = formData.get("description");
+        const price_bcv = parseFloat(formData.get("price_bcv") || 0);
+        const price_cash = parseFloat(formData.get("price_cash") || 0);
+        const stock = parseInt(formData.get("stock") || 0);
+        const category_id = formData.get("category_id");
+        const status = formData.get("status");
 
-    try {
-      const response = await fetch(`/api/products/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+        await query(`
+            UPDATE products 
+            SET name = $1, code = $2, description = $3, price_bcv = $4, price_cash = $5, stock = $6, category_id = $7, status = $8
+            WHERE id = $9
+        `, [name, code, description, price_bcv, price_cash, stock, category_id, status, id]);
 
-      if (!response.ok) throw new Error("Failed to update product");
-
-      router.push("/products");
-      router.refresh();
-    } catch (error) {
-      console.error("Error updating product:", error);
-      alert("Error al actualizar el producto");
-    } finally {
-      setSaving(false);
+        revalidatePath("/products");
+        redirect("/products");
     }
-  };
 
-  const handleDelete = async () => {
-    if (!confirm("¿Estás seguro de que deseas eliminar este producto?")) return;
-    
-    try {
-      const response = await fetch(`/api/products/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) throw new Error("Failed to delete product");
-
-      router.push("/products");
-      router.refresh();
-    } catch (error) {
-      console.error("Error deleting product:", error);
-      alert("Error al eliminar el producto");
-    }
-  };
-
-  const handleImagesChange = (urls) => {
-    setFormData(prev => ({ ...prev, images: urls }));
-  };
-
-  if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
-        <Loader2 className="animate-spin" size={48} color="var(--primary)" />
-      </div>
+        <div style={{ maxWidth: '800px' }}>
+            <header style={{ marginBottom: '2.5rem' }}>
+                <Link href="/products" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--muted-foreground)', textDecoration: 'none', marginBottom: '1rem' }}>
+                    <ArrowLeft size={16} />
+                    Volver a Productos
+                </Link>
+                <h1 style={{ fontSize: '2.25rem', fontWeight: 800 }}>Editar Producto</h1>
+            </header>
+
+            <form action={updateProduct} className="card glass" style={{ padding: '2rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                    <div className="form-group">
+                        <label className="label">Nombre del Producto</label>
+                        <input name="name" type="text" required className="input-field" defaultValue={product.name} />
+                    </div>
+                    <div className="form-group">
+                        <label className="label">Código (SKU)</label>
+                        <input name="code" type="text" required className="input-field" defaultValue={product.code} />
+                    </div>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                    <label className="label">Descripción</label>
+                    <textarea name="description" className="input-field" style={{ minHeight: '100px', resize: 'vertical' }} defaultValue={product.description}></textarea>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                    <div className="form-group">
+                        <label className="label">Precio BCV ($)</label>
+                        <input name="price_bcv" type="number" step="0.01" required className="input-field" defaultValue={product.price_bcv} />
+                    </div>
+                    <div className="form-group">
+                        <label className="label">Precio Divisas ($)</label>
+                        <input name="price_cash" type="number" step="0.01" required className="input-field" defaultValue={product.price_cash} />
+                    </div>
+                    <div className="form-group">
+                        <label className="label">Stock</label>
+                        <input name="stock" type="number" required className="input-field" defaultValue={product.stock} />
+                    </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+                    <div className="form-group">
+                        <label className="label">Categoría</label>
+                        <select name="category_id" className="input-field" defaultValue={product.category_id}>
+                            <option value="">Seleccionar categoría</option>
+                            {categories.map(cat => (
+                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="form-group">
+                        <label className="label">Estado</label>
+                        <select name="status" className="input-field" defaultValue={product.status}>
+                            <option value="active">Activo</option>
+                            <option value="draft">Borrador</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
+                    <Link href="/products" className="btn-outline">Cancelar</Link>
+                    <button type="submit" className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Save size={18} />
+                        Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
     );
-  }
-
-  return (
-    <div>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2.5rem' }}>
-        <div>
-          <Link href="/products" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--muted-foreground)', textDecoration: 'none', marginBottom: '1rem', fontSize: '0.875rem' }}>
-            <ArrowLeft size={16} />
-            Volver a productos
-          </Link>
-          <h1 style={{ fontSize: '2.25rem', fontWeight: 800, letterSpacing: '-0.025em' }}>Editar Producto</h1>
-        </div>
-        <button 
-          onClick={handleDelete}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--destructive)', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', padding: '0.5rem 1rem', borderRadius: 'var(--radius)', cursor: 'pointer', fontWeight: 600 }}
-        >
-          <Trash2 size={18} />
-          Eliminar
-        </button>
-      </header>
-
-      <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '2rem' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          {/* General Information */}
-          <div className="card glass">
-            <h2 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1.5rem' }}>Información General</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <div className="form-group">
-                <label>Nombre del Producto</label>
-                <input 
-                  type="text" 
-                  className="input-field" 
-                  placeholder="Ej. Sofá Modular Practiiko"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  required
-                />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div className="form-group">
-                  <label>Código (SKU)</label>
-                  <input 
-                    type="text" 
-                    className="input-field" 
-                    placeholder="Ej. C002+K3217-1"
-                    value={formData.code}
-                    onChange={(e) => setFormData({...formData, code: e.target.value})}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Slug (URL)</label>
-                  <input 
-                    type="text" 
-                    className="input-field" 
-                    placeholder="sofa-modular-practiiko"
-                    value={formData.slug}
-                    onChange={(e) => setFormData({...formData, slug: e.target.value})}
-                    required
-                  />
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Descripción</label>
-                <textarea 
-                  className="input-field" 
-                  style={{ minHeight: '120px', resize: 'vertical' }}
-                  placeholder="Describe las características del producto..."
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                ></textarea>
-              </div>
-            </div>
-          </div>
-
-          {/* Media */}
-          <div className="card glass">
-            <h2 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1.5rem' }}>Galería de Imágenes</h2>
-            <ImageUpload 
-              onImagesChange={handleImagesChange} 
-              initialImages={formData.images} 
-            />
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          {/* Status & Category */}
-          <div className="card glass">
-            <h2 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1.5rem' }}>Organización</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <div className="form-group">
-                <label>Estado</label>
-                <select 
-                  className="input-field"
-                  value={formData.status}
-                  onChange={(e) => setFormData({...formData, status: e.target.value})}
-                >
-                  <option value="active">Activo</option>
-                  <option value="draft">Borrador</option>
-                  <option value="archived">Archivado</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Categoría</label>
-                <select 
-                  className="input-field"
-                  value={formData.category_id}
-                  onChange={(e) => setFormData({...formData, category_id: e.target.value})}
-                >
-                  <option value="">Seleccionar categoría</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Pricing & Stock */}
-          <div className="card glass">
-            <h2 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1.5rem' }}>Precios y Stock</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <div className="form-group">
-                <label>Precio 1 USD $ (BCV)</label>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  className="input-field" 
-                  placeholder="0.00"
-                  value={formData.price_bcv}
-                  onChange={(e) => setFormData({...formData, price_bcv: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Precio 2 USD $ (DIVISAS)</label>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  className="input-field" 
-                  placeholder="0.00"
-                  value={formData.price_cash}
-                  onChange={(e) => setFormData({...formData, price_cash: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Stock Disponible</label>
-                <input 
-                  type="number" 
-                  className="input-field" 
-                  placeholder="0"
-                  value={formData.stock}
-                  onChange={(e) => setFormData({...formData, stock: e.target.value})}
-                  required
-                />
-              </div>
-            </div>
-          </div>
-
-          <button 
-            type="submit" 
-            className="btn-primary" 
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem' }}
-            disabled={saving}
-          >
-            {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-            Actualizar Producto
-          </button>
-        </div>
-      </form>
-
-      <style jsx>{`
-        .form-group {
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-        }
-        .form-group label {
-          font-size: 0.875rem;
-          font-weight: 600;
-          color: var(--muted-foreground);
-        }
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .animate-spin {
-          animation: spin 1s linear infinite;
-        }
-      `}</style>
-    </div>
-  );
 }

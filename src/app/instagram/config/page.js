@@ -1,4 +1,5 @@
 import { query } from "@/lib/db";
+export const dynamic = "force-dynamic";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { Settings, Save, CheckCircle, AlertTriangle, RefreshCcw, ShieldCheck } from "lucide-react";

@@ -11,19 +11,18 @@ async function getChatHistory(sessionId) {
       ORDER BY created_at ASC
     `, [sessionId]);
     
-    // Parseamos los mensajes JSONB
     return res.rows.map(row => ({
       id: row.id,
       timestamp: row.created_at,
       ...row.message
     }));
   } catch (e) {
-    console.error("Error fetching chat history:", e);
+    console.error("Error fetching history:", e);
     return [];
   }
 }
 
-export default async function ConversationDetailPage({ params }) {
+export default async function InstagramDetailPage({ params }) {
   const { id } = await params;
   const history = await getChatHistory(id);
 
@@ -32,9 +31,9 @@ export default async function ConversationDetailPage({ params }) {
       <header style={{ marginBottom: '2rem' }}>
         <Link href="/instagram" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--muted-foreground)', textDecoration: 'none', marginBottom: '1rem' }}>
           <ArrowLeft size={16} />
-          Volver al listado
+          Volver al monitoreo
         </Link>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800 }}>Chat: {id}</h1>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 800 }}>Chat: {id.substring(0, 8)}...</h1>
       </header>
 
       <div className="card glass" style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '2rem', minHeight: '60vh' }}>
@@ -42,7 +41,7 @@ export default async function ConversationDetailPage({ params }) {
           <p style={{ textAlign: 'center', color: 'var(--muted-foreground)' }}>No hay mensajes en esta conversación.</p>
         ) : (
           history.map((msg, index) => {
-            const isBot = msg.role === 'assistant' || msg.type === 'ai';
+            const isBot = msg.role === 'assistant' || msg.role === 'ai';
             return (
               <div key={index} style={{ 
                 display: 'flex', 
@@ -74,7 +73,7 @@ export default async function ConversationDetailPage({ params }) {
                   lineHeight: 1.5,
                   whiteSpace: 'pre-wrap'
                 }}>
-                  {msg.content || msg.text || JSON.stringify(msg)}
+                  {msg.content}
                 </div>
                 
                 <span style={{ fontSize: '0.65rem', color: 'var(--muted-foreground)', marginTop: '0.25rem' }}>

@@ -1,4 +1,5 @@
 import { query } from "@/lib/db";
+export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { Plus, Tag, Edit, Trash2, ChevronRight } from "lucide-react";
 
@@ -34,42 +35,46 @@ export default async function CategoriesPage() {
         </Link>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+      <div className="grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
         {categories.length === 0 ? (
-          <div className="card glass" style={{ gridColumn: '1 / -1', padding: '4rem', textAlign: 'center', color: 'var(--muted-foreground)' }}>
-            No hay categorías creadas. Comienza añadiendo una para organizar tu catálogo.
+          <div className="card glass" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '4rem' }}>
+            <Tag size={48} style={{ color: 'var(--muted-foreground)', marginBottom: '1rem', opacity: 0.5 }} />
+            <h3>No hay categorías</h3>
+            <p style={{ color: 'var(--muted-foreground)' }}>Crea categorías para organizar mejor tu catálogo.</p>
           </div>
         ) : (
-          categories.map((cat) => (
-            <div key={cat.id} className="card glass category-card" style={{ padding: '1.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
-                <div style={{ padding: '0.625rem', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '0.75rem', color: 'var(--primary)' }}>
-                  <Tag size={20} />
-                </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <Link href={`/categories/${cat.id}/edit`} className="nav-link" style={{ padding: '0.4rem' }}>
-                    <Edit size={16} />
-                  </Link>
-                  <button className="nav-link" style={{ padding: '0.4rem', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--destructive)' }}>
-                    <Trash2 size={16} />
-                  </button>
+          categories.map((category) => (
+            <div key={category.id} className="card glass" style={{ padding: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--accent)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Tag size={20} />
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>{category.name}</h3>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>{category.product_count} productos</span>
+                  </div>
                 </div>
               </div>
               
-              <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '0.25rem' }}>{cat.name}</h3>
-              <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '1.5rem' }}>/{cat.slug}</p>
-              
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '1.25rem', borderTop: '1px solid var(--border)' }}>
-                <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{cat.product_count} Productos</span>
-                <Link href={`/products?category=${cat.id}`} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 700, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Ver Productos <ChevronRight size={14} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                   <Link href={`/categories/${category.id}/edit`} className="nav-link" style={{ padding: '0.5rem' }}>
+                    <Edit size={16} />
+                  </Link>
+                  <button className="nav-link" style={{ padding: '0.5rem', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--destructive)' }}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+                <Link href="/products" className="nav-link" style={{ fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  Ver productos
+                  <ChevronRight size={14} />
                 </Link>
               </div>
             </div>
           ))
         )}
       </div>
-
     </div>
   );
 }
