@@ -1,7 +1,7 @@
 import { query } from "@/lib/db";
 export const dynamic = "force-dynamic";
 import Link from "next/link";
-import { MessageSquare, Instagram, Clock, User, ChevronRight } from "lucide-react";
+import { MessageSquare, MessageCircle, Clock, User, ChevronRight } from "lucide-react";
 
 async function getConversations() {
   try {
@@ -30,7 +30,7 @@ export default async function InstagramMonitoringPage() {
       <header style={{ marginBottom: '2.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
           <div style={{ background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)', padding: '0.5rem', borderRadius: '12px', display: 'flex' }}>
-            <Instagram color="white" size={24} />
+            <MessageCircle color="white" size={24} />
           </div>
           <h1 style={{ fontSize: '2.25rem', fontWeight: 800, letterSpacing: '-0.025em' }}>Monitoreo Instagram</h1>
         </div>
