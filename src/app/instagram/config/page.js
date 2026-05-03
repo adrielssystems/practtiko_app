@@ -1,9 +1,9 @@
 import { query } from "@/lib/db";
 export const dynamic = "force-dynamic";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { Settings, Save, CheckCircle, AlertTriangle, RefreshCcw, ShieldCheck } from "lucide-react";
+import { RefreshCcw, ShieldCheck, CheckCircle, AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import PromptEditor from "@/components/Instagram/PromptEditor";
 
 async function getSettings() {
   const res = await query("SELECT value FROM tiiko_settings WHERE key = 'ai_prompt'");
@@ -35,13 +35,11 @@ async function updatePrompt(formData) {
   "use server";
   try {
     const newPrompt = formData.get("prompt");
-    console.log("[DEBUG] Guardando nuevo prompt...");
     await query("UPDATE tiiko_settings SET value = $1 WHERE key = 'ai_prompt'", [newPrompt]);
-    console.log("[DEBUG] Prompt guardado con éxito.");
     revalidatePath("/instagram/config");
-    redirect("/instagram/config");
   } catch (error) {
     console.error("[ERROR] Fallo al guardar el prompt:", error);
+    throw error;
   }
 }
 
@@ -57,41 +55,8 @@ export default async function InstagramConfigPage() {
       </header>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '2rem' }}>
-        {/* Editor de Prompt */}
-        <div className="card glass" style={{ padding: '2rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-            <div style={{ background: 'rgba(4, 119, 191, 0.1)', padding: '0.5rem', borderRadius: '8px' }}>
-              <Settings size={20} color="var(--primary)" />
-            </div>
-            <h3 style={{ margin: 0 }}>Instrucciones del Agente (Prompt)</h3>
-          </div>
-          
-          <form action={updatePrompt}>
-            <textarea 
-              name="prompt"
-              defaultValue={prompt}
-              style={{ 
-                width: '100%', 
-                minHeight: '400px', 
-                padding: '1.25rem', 
-                borderRadius: '12px', 
-                background: 'rgba(255,255,255,0.5)', 
-                border: '1px solid rgba(0,0,0,0.1)',
-                fontFamily: 'monospace',
-                fontSize: '0.9rem',
-                lineHeight: 1.6,
-                marginBottom: '1.5rem',
-                outline: 'none',
-                resize: 'vertical'
-              }}
-              placeholder="Escribe aquí las instrucciones para el bot..."
-            />
-            <button className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 2rem' }}>
-              <Save size={18} />
-              Guardar Cambios
-            </button>
-          </form>
-        </div>
+        {/* Editor de Prompt (Client Component) */}
+        <PromptEditor initialPrompt={prompt} onSaveAction={updatePrompt} />
 
         {/* Estado de Integración */}
         <aside style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
