@@ -110,27 +110,17 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
     const aiResponse = result.output;
 
     // 2. Guardar en la tabla correspondiente
-    // Nota: El webhook de WhatsApp ya guarda los mensajes, pero lo dejamos aquí por si se llama desde el simulador
     if (source !== 'whatsapp' || sessionId.startsWith('simul')) {
+      const dbTable = source === 'whatsapp' ? 'whatsapp_messages' : 'instagram_messages';
       if (source === 'whatsapp') {
         await query(
           `INSERT INTO whatsapp_messages (session_id, message) VALUES ($1, $2), ($1, $3)`,
-          [
-            sessionId, 
-            JSON.stringify({ role: 'user', content: message }),
-            JSON.stringify({ role: 'assistant', content: aiResponse })
-          ]
+          [sessionId, JSON.stringify({ role: 'user', content: message }), JSON.stringify({ role: 'assistant', content: aiResponse })]
         );
       } else {
         await query(
           `INSERT INTO instagram_messages (session_id, message, source, comment_id) VALUES ($1, $2, $3, $4), ($1, $5, $3, $4)`,
-          [
-            sessionId, 
-            JSON.stringify({ role: 'user', content: message }), 
-            source,
-            commentId,
-            JSON.stringify({ role: 'assistant', content: aiResponse })
-          ]
+          [sessionId, JSON.stringify({ role: 'user', content: message }), source, commentId, JSON.stringify({ role: 'assistant', content: aiResponse })]
         );
       }
     }
@@ -138,6 +128,7 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
     return aiResponse;
   } catch (error) {
     console.error("[AGENT ERROR]:", error);
-    return "Lo siento, tuve un problema técnico. ¿Podría repetirme su consulta? 💎";
+    // DEVOLVER EL ERROR REAL AL CHAT PARA DEPURACIÓN TEMPORAL
+    return `[ERROR TÉCNICO]: ${error.message || 'Error desconocido'}. Revisa la API Key o el modelo en Ajustes. 💎`;
   }
 }
