@@ -11,7 +11,8 @@ async function getConversations() {
         MAX(m.created_at) as last_message,
         COUNT(*) as total_messages,
         c.full_name,
-        c.username
+        c.username,
+        (SELECT source FROM instagram_messages m2 WHERE m2.session_id = m.session_id ORDER BY created_at DESC LIMIT 1) as latest_source
       FROM instagram_messages m
       LEFT JOIN instagram_customers c ON m.session_id = c.id
       GROUP BY m.session_id, c.full_name, c.username
@@ -70,8 +71,14 @@ export default async function InstagramMonitoringPage() {
                       <User size={20} />
                     </div>
                     <div>
-                      <h4 style={{ margin: 0, fontWeight: 700 }}>
+                      <h4 style={{ margin: 0, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         {conv.full_name || (conv.session_id.startsWith('test-') ? conv.session_id : `Cliente: ${conv.session_id.substring(0, 10)}...`)}
+                        {conv.latest_source === 'comment' && (
+                          <span style={{ fontSize: '0.6rem', background: 'var(--accent)', color: 'white', padding: '2px 6px', borderRadius: '10px', textTransform: 'uppercase' }}>Comentario</span>
+                        )}
+                        {conv.latest_source === 'dm' && (
+                          <span style={{ fontSize: '0.6rem', background: 'var(--primary)', color: 'white', padding: '2px 6px', borderRadius: '10px', textTransform: 'uppercase' }}>Mensaje</span>
+                        )}
                       </h4>
                       <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                         <Clock size={12} /> {new Date(conv.last_message).toLocaleString('es-VE', { timeZone: 'America/Caracas' })}

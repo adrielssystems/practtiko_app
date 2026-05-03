@@ -62,7 +62,7 @@ IDENTIDAD Y MARCA:
 FECHA ACTUAL: {now}
 `;
 
-export async function processChatMessage(message, sessionId) {
+export async function processChatMessage(message, sessionId, source = 'dm', commentId = null) {
   // 1. Cargar historial desde la base de datos
   const historyRes = await query(
     `SELECT message FROM instagram_messages WHERE session_id = $1 ORDER BY created_at ASC LIMIT 10`,
@@ -117,10 +117,12 @@ export async function processChatMessage(message, sessionId) {
 
   // 2. Guardar mensaje del usuario y respuesta de la IA en la DB
   await query(
-    `INSERT INTO instagram_messages (session_id, message) VALUES ($1, $2), ($1, $3)`,
+    `INSERT INTO instagram_messages (session_id, message, source, comment_id) VALUES ($1, $2, $3, $4), ($1, $5, $3, $4)`,
     [
       sessionId, 
       JSON.stringify({ role: 'user', content: message }), 
+      source,
+      commentId,
       JSON.stringify({ role: 'assistant', content: aiResponse })
     ]
   );
