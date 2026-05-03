@@ -38,7 +38,6 @@ export default async function WhatsAppPage() {
             Supervisa las conversaciones de Evolution API en tiempo real.
           </p>
         </div>
-        </div>
       </header>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.5rem' }}>

@@ -46,7 +46,6 @@ export default async function InstagramMonitoringPage() {
             Supervisa las conversaciones en tiempo real entre tus clientes y el Agente Virtual de Practiiko.
           </p>
         </div>
-        </div>
       </header>
 
       <div className="grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
