@@ -76,12 +76,21 @@ export async function POST(req) {
 
         // --- 2. PROCESAR COMENTARIOS ---
         if (entry.changes) {
+          const pageId = entry.id;
+
           for (const change of entry.changes) {
             if (change.field === "comments") {
               const commentId = change.value.id;
+              const senderId = change.value.from?.id;
+
+              // FILTRO CRÍTICO: No responder a comentarios hechos por la propia página
+              if (senderId === pageId) {
+                console.log("[WEBHOOK] Comentario propio detectado. Ignorando.");
+                continue;
+              }
+
               const userMessage = change.value.text;
-              const senderId = change.value.from.id;
-              const username = change.value.from.username;
+              const username = change.value.from?.username;
 
               console.log(`[INSTAGRAM COMMENT] Nuevo de @${username} en ${commentId}: ${userMessage}`);
 
