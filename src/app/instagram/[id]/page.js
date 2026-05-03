@@ -6,7 +6,7 @@ import { ArrowLeft, User, Bot, Clock } from "lucide-react";
 async function getChatHistory(sessionId) {
   try {
     const res = await query(`
-      SELECT * FROM tiiko_chat_memory 
+      SELECT * FROM instagram_messages 
       WHERE session_id = $1 
       ORDER BY created_at ASC
     `, [sessionId]);
@@ -24,6 +24,11 @@ async function getChatHistory(sessionId) {
 
 export default async function InstagramDetailPage({ params }) {
   const { id } = await params;
+  
+  // Obtener nombre del cliente
+  const customerRes = await query("SELECT full_name FROM instagram_customers WHERE id = $1", [id]);
+  const customerName = customerRes.rows[0]?.full_name || id;
+
   const history = await getChatHistory(id);
 
   return (
@@ -33,7 +38,7 @@ export default async function InstagramDetailPage({ params }) {
           <ArrowLeft size={16} />
           Volver al monitoreo
         </Link>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800 }}>Chat: {id.substring(0, 8)}...</h1>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 800 }}>Chat: {customerName}</h1>
       </header>
 
       <div className="card glass" style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '2rem', minHeight: '60vh' }}>

@@ -37,10 +37,18 @@ export async function POST(req) {
 
             console.log(`[INSTAGRAM] Nuevo mensaje de ${senderId}: ${userMessage}`);
 
-            // 1. (Opcional) Obtener historial de la tabla tiiko_chat_memory
-            // Por ahora procesamos directamente para validar el flujo
-            
-            // 2. Procesar con la IA (DeepSeek + Herramientas de DB)
+            // Obtener info del usuario y guardar en DB
+            const userInfo = await getInstagramUserInfo(senderId);
+            if (userInfo) {
+              await query(
+                `INSERT INTO instagram_customers (id, username, full_name, last_seen) 
+                 VALUES ($1, $2, $3, NOW()) 
+                 ON CONFLICT (id) DO UPDATE SET username = $2, full_name = $3, last_seen = NOW()`,
+                [senderId, userInfo.username, userInfo.name || userInfo.username]
+              );
+            }
+
+            // 2. Procesar con la IA
             const aiResponse = await processChatMessage(userMessage, senderId);
 
             // 3. Enviar respuesta a Instagram
@@ -54,6 +62,25 @@ export async function POST(req) {
   } catch (error) {
     console.error("[ERROR WEBHOOK]:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+async function getInstagramUserInfo(userId) {
+  const PAGE_ACCESS_TOKEN = process.env.INSTAGRAM_PAGE_ACCESS_TOKEN;
+  if (!PAGE_ACCESS_TOKEN) return null;
+
+  try {
+    const url = `https://graph.instagram.com/v21.0/${userId}?fields=username,name&access_token=${PAGE_ACCESS_TOKEN}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.error) {
+      console.error("[ERROR FETCH USER]:", data.error);
+      return null;
+    }
+    return data;
+  } catch (e) {
+    console.error("[FETCH USER EXCEPTION]:", e);
+    return null;
   }
 }
 

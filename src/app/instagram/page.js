@@ -7,11 +7,14 @@ async function getConversations() {
   try {
     const res = await query(`
       SELECT 
-        session_id, 
-        MAX(created_at) as last_message,
-        COUNT(*) as total_messages
-      FROM tiiko_chat_memory
-      GROUP BY session_id
+        m.session_id, 
+        MAX(m.created_at) as last_message,
+        COUNT(*) as total_messages,
+        c.full_name,
+        c.username
+      FROM instagram_messages m
+      LEFT JOIN instagram_customers c ON m.session_id = c.id
+      GROUP BY m.session_id, c.full_name, c.username
       ORDER BY last_message DESC
       LIMIT 20
     `);
@@ -67,7 +70,9 @@ export default async function InstagramMonitoringPage() {
                       <User size={20} />
                     </div>
                     <div>
-                      <h4 style={{ margin: 0, fontWeight: 700 }}>Cliente: {conv.session_id.substring(0, 10)}...</h4>
+                      <h4 style={{ margin: 0, fontWeight: 700 }}>
+                        {conv.full_name || (conv.session_id.startsWith('test-') ? conv.session_id : `Cliente: ${conv.session_id.substring(0, 10)}...`)}
+                      </h4>
                       <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                         <Clock size={12} /> {new Date(conv.last_message).toLocaleString('es-VE', { timeZone: 'America/Caracas' })}
                       </span>

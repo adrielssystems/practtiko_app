@@ -65,7 +65,7 @@ FECHA ACTUAL: {now}
 export async function processChatMessage(message, sessionId) {
   // 1. Cargar historial desde la base de datos
   const historyRes = await query(
-    `SELECT message FROM tiiko_chat_memory WHERE session_id = $1 ORDER BY created_at ASC LIMIT 10`,
+    `SELECT message FROM instagram_messages WHERE session_id = $1 ORDER BY created_at ASC LIMIT 10`,
     [sessionId]
   );
   
@@ -77,7 +77,7 @@ export async function processChatMessage(message, sessionId) {
 
 
   // Intentar cargar el prompt personalizado desde la DB
-  const settingsRes = await query("SELECT value FROM tiiko_settings WHERE key = 'ai_prompt'");
+  const settingsRes = await query("SELECT value FROM app_settings WHERE key = 'ai_prompt'");
   const dynamicSystemMessage = settingsRes.rows[0]?.value || SYSTEM_MESSAGE;
 
   const model = new ChatOpenAI({
@@ -117,7 +117,7 @@ export async function processChatMessage(message, sessionId) {
 
   // 2. Guardar mensaje del usuario y respuesta de la IA en la DB
   await query(
-    `INSERT INTO tiiko_chat_memory (session_id, message) VALUES ($1, $2), ($1, $3)`,
+    `INSERT INTO instagram_messages (session_id, message) VALUES ($1, $2), ($1, $3)`,
     [
       sessionId, 
       JSON.stringify({ role: 'user', content: message }), 

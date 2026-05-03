@@ -6,7 +6,7 @@ import Link from "next/link";
 import PromptEditor from "@/components/Instagram/PromptEditor";
 
 async function getSettings() {
-  const res = await query("SELECT value FROM tiiko_settings WHERE key = 'ai_prompt'");
+  const res = await query("SELECT value FROM app_settings WHERE key = 'ai_prompt'");
   return res.rows[0]?.value || "";
 }
 
@@ -35,7 +35,7 @@ async function updatePrompt(formData) {
   "use server";
   try {
     const newPrompt = formData.get("prompt");
-    await query("UPDATE tiiko_settings SET value = $1 WHERE key = 'ai_prompt'", [newPrompt]);
+    await query("UPDATE app_settings SET value = $1 WHERE key = 'ai_prompt'", [newPrompt]);
     revalidatePath("/instagram/config");
   } catch (error) {
     console.error("[ERROR] Fallo al guardar el prompt:", error);
