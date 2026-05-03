@@ -7,15 +7,11 @@ async function getConversations() {
   try {
     const res = await query(`
       SELECT 
-        m.session_id, 
-        MAX(m.created_at) as last_message,
-        COUNT(*) as total_messages,
-        c.full_name,
-        c.username,
-        (SELECT source FROM instagram_messages m2 WHERE m2.session_id = m.session_id ORDER BY created_at DESC LIMIT 1) as latest_source
-      FROM instagram_messages m
-      LEFT JOIN instagram_customers c ON m.session_id = c.id
-      GROUP BY m.session_id, c.full_name, c.username
+        session_id, 
+        MAX(created_at) as last_message,
+        COUNT(*) as total_messages
+      FROM instagram_messages
+      GROUP BY session_id
       ORDER BY last_message DESC
       LIMIT 20
     `);
