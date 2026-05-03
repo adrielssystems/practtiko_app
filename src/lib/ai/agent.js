@@ -1,41 +1,29 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { AgentExecutor, createOpenAIFunctionsAgent } from "langchain/agents";
-import {
-  ChatPromptTemplate,
-  MessagesPlaceholder,
-} from "@langchain/core/prompts";
-import { DynamicTool } from "@langchain/core/tools";
-import { query } from "@/lib/db";
-import { HumanMessage, AIMessage } from "@langchain/core/messages";
+import { DynamicStructuredTool } from "@langchain/core/tools";
+import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts";
+import { AIMessage, HumanMessage } from "@langchain/core/messages";
+import { z } from "zod";
+import { query } from "../db.js";
 
-// La inicialización del modelo se movió dentro de la función para evitar errores en build
-
-const productsTool = new DynamicTool({
+// Herramienta de consulta de productos
+const productsTool = new DynamicStructuredTool({
   name: "consultar_productos",
-  description: "DEBES usar esta herramienta SIEMPRE que el cliente mencione un producto (sofá, cama, etc.) para verificar si existe en el catálogo. Si no hay resultados, informa que no manejamos ese rubro.",
-  func: async (input) => {
+  description: "ÚNICA FUENTE DE VERDAD SOBRE EL INVENTARIO. Úsala ANTES de saludar o pedir datos si el cliente menciona CUALQUIER objeto (ej: colchón, cama, sofá, modular). No asumas que vendemos algo si no aparece aquí. Devuelve modelos, materiales y disponibilidad.",
+  schema: z.object({
+    query: z.string().describe("El producto o modelo a buscar (ej: 'sofa', 'modular', 'colchon')"),
+  }),
+  func: async function({ query: searchTerm }) {
+    console.log(`[DB QUERY] Buscando en catálogo: ${searchTerm}`);
     try {
-      const res = await query(`
-        SELECT p.name, p.code, p.price_bcv, p.price_cash, p.stock, p.description, c.name as category
-        FROM products p
-        LEFT JOIN categories c ON p.category_id = c.id
-        WHERE p.name ILIKE $1 OR p.code ILIKE $1 OR p.description ILIKE $1
-        LIMIT 5
-      `, [`%${input}%`]);
-
-      if (res.rows.length === 0) return "No se encontraron productos con esos términos.";
-
-      return JSON.stringify(res.rows.map(p => ({
-        nombre: p.name,
-        sku: p.code,
-        precio_bcv: `$${p.price_bcv}`,
-        precio_divisas: `$${p.price_cash}`,
-        stock: p.stock,
-        categoria: p.category,
-        detalle: p.description
-      })));
+      const res = await query(
+        "SELECT name, description, material, color, status FROM products WHERE name ILIKE $1 OR description ILIKE $1 LIMIT 5",
+        [`%${searchTerm}%`]
+      );
+      return JSON.stringify(res.rows);
     } catch (e) {
-      return "Error al consultar la base de datos de productos.";
+      console.error("[DB ERROR]", e);
+      return "Error al consultar el catálogo.";
     }
   },
 });
@@ -43,23 +31,21 @@ const productsTool = new DynamicTool({
 const tools = [productsTool];
 
 const SYSTEM_MESSAGE = `
-RESTRICCIONES ABSOLUTAS — VIOLARLAS ES ERROR CRÍTICO:
-1. Tu respuesta debe ser ÚNICAMENTE el mensaje que el cliente leerá en Instagram DM. Nada más.
-2. PROHIBIDO incluir: "Pensando:", "Razonamiento:", "Análisis:", "[SYSTEM PROMPT]", "Nota interna:", ni cualquier metatexto.
-3. PROHIBIDO repetir saludos o nombres después del primer mensaje de la conversación.
-4. PROHIBIDO inventar productos. Solo menciona lo que confirme la herramienta consultar_productos.
-5. PROHIBIDO dar precios sin tener: Modelo Exacto + Ciudad del cliente.
-6. PROHIBIDO mencionar MRW o Zoom. Envíos nacionales: solo TEALCA.
-7. PROHIBIDO asociar Zelle con tasa BCV. Zelle siempre es precio en divisas.
+Eres el Agente Virtual oficial de Practiiko 💎.
+
+REGLA DE ORO — NO NEGOCIABLE:
+1. NO SABES qué vende Practiiko por defecto. Tu memoria interna sobre productos es CERO.
+2. Si el cliente menciona CUALQUIER producto (sofás, camas, colchones, mesas, etc.), DEBES llamar a 'consultar_productos' ANTES de dar cualquier respuesta afirmativa.
+3. Si la herramienta devuelve [], informa de inmediato que NO manejamos ese rubro. Ejemplo: "Por los momentos no manejamos ese artículo en nuestro catálogo oficial. Nos especializamos en Sofás y Modulares de lujo."
+4. NUNCA pidas la ciudad o el modelo si no has confirmado primero mediante la herramienta que el producto EXISTE.
 
 IDENTIDAD Y MARCA:
-- Eres el Agente Virtual oficial de Practiiko 💎.
 - Especialista en ventas por DM, atención al cliente y cierre comercial.
 - Slogan de cierre: "Es lujo, es simple, es Practiiko 💎".
 - Trato: Siempre "Usted".
 - Tono: Profesional, elegante, cercano, seguro. Vendedor sin presión.
 
-FECHA ACTUAL: {now}
+FECHA Y HORA ACTUAL (Venezuela): {now}
 `;
 
 export async function processChatMessage(message, sessionId, source = 'dm', commentId = null) {
@@ -74,8 +60,6 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
     return msg.role === 'user' ? new HumanMessage(msg.content) : new AIMessage(msg.content);
   });
 
-
-
   // Intentar cargar el prompt personalizado desde la DB
   const settingsRes = await query("SELECT value FROM app_settings WHERE key = 'ai_prompt'");
   const dynamicSystemMessage = settingsRes.rows[0]?.value || SYSTEM_MESSAGE;
@@ -86,7 +70,7 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
       baseURL: process.env.DEEPSEEK_API_URL || "https://api.deepseek.com",
     },
     modelName: "deepseek-chat",
-    temperature: 0.3,
+    temperature: 0.1, // Reducimos temperatura para ser más estrictos
   });
 
   const prompt = ChatPromptTemplate.fromMessages([
