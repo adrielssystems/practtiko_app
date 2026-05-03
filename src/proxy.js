@@ -9,7 +9,7 @@ export const proxy = withAuth({
 
 export const config = {
   matcher: [
-    "/((?!api/auth|login|_next/static|_next/image|favicon.ico|uploads).*)",
+    "/((?!api/auth|api/webhooks|login|_next/static|_next/image|favicon.ico|uploads).*)",
   ],
 };
 

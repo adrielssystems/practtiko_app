@@ -1,5 +1,7 @@
 import { query } from "@/lib/db";
 import { Package, TrendingUp, Users, AlertCircle } from "lucide-react";
+export const dynamic = "force-dynamic";
+
 
 async function getStats() {
   try {
