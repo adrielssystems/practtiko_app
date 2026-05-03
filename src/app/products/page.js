@@ -120,11 +120,6 @@ export default async function ProductsPage() {
         </table>
       </div>
 
-      <style jsx>{`
-        .table-row:hover {
-          background: rgba(255, 255, 255, 0.02);
-        }
-      `}</style>
     </div>
   );
 }

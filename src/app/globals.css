@@ -164,3 +164,17 @@ body {
   border-color: var(--primary);
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
+
+.table-row:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.category-card {
+  transition: all 0.2s;
+}
+
+.category-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--primary);
+  box-shadow: 0 12px 24px rgba(99, 102, 241, 0.1);
+}
