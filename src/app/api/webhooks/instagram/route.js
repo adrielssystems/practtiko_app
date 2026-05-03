@@ -37,9 +37,19 @@ export async function POST(req) {
         // --- 1. PROCESAR MENSAJES (DMs) ---
         if (entry.messaging) {
           for (const messaging of entry.messaging) {
-            if (messaging.message && !messaging.message.is_echo) {
+            // FILTRO DE SEGURIDAD: Ignorar si es un eco o si no tiene texto
+            if (messaging.message?.is_echo === true) {
+              console.log("[WEBHOOK] Ignorando eco del sistema.");
+              continue;
+            }
+
+            if (messaging.message?.text) {
               const senderId = messaging.sender.id;
+              const recipientId = messaging.recipient.id;
               const userMessage = messaging.message.text;
+
+              // Si el remitente es el mismo que el destinatario (o la página), ignorar
+              if (senderId === recipientId) continue;
 
               console.log(`[INSTAGRAM DM] Nuevo mensaje de ${senderId}: ${userMessage}`);
 
@@ -54,8 +64,10 @@ export async function POST(req) {
                 );
               }
 
-              const aiResponse = await processChatMessage(userMessage, senderId, 'dm');
-              await sendInstagramMessage(senderId, aiResponse);
+              // Procesar en segundo plano para no bloquear a Meta
+              processChatMessage(userMessage, senderId, 'dm').then(aiResponse => {
+                sendInstagramMessage(senderId, aiResponse);
+              }).catch(e => console.error("[ERROR ASYNC DM]:", e));
             }
           }
         }
@@ -72,15 +84,16 @@ export async function POST(req) {
               console.log(`[INSTAGRAM COMMENT] Nuevo de @${username} en ${commentId}: ${userMessage}`);
 
               // Guardar cliente
-              await query(
+              query(
                 `INSERT INTO instagram_customers (id, username, full_name, last_seen) 
                  VALUES ($1, $2, $3, NOW()) 
                  ON CONFLICT (id) DO UPDATE SET username = $2, full_name = $3, last_seen = NOW()`,
                 [senderId, username, username]
               );
 
-              const aiResponse = await processChatMessage(userMessage, senderId, 'comment', commentId);
-              await replyToInstagramComment(commentId, aiResponse);
+              processChatMessage(userMessage, senderId, 'comment', commentId).then(aiResponse => {
+                replyToInstagramComment(commentId, aiResponse);
+              }).catch(e => console.error("[ERROR ASYNC COMMENT]:", e));
             }
           }
         }
