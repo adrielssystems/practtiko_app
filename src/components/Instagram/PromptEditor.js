@@ -11,6 +11,7 @@ export default function PromptEditor({ initialPrompt, onSaveAction }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("Submit clicked, prompt length:", prompt.length);
     
     startTransition(async () => {
       try {
