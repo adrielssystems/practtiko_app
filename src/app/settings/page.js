@@ -156,20 +156,36 @@ export default function SettingsPage() {
                 <div style={{ display: 'flex', gap: '1rem' }}>
                   <button 
                     onClick={async () => {
-                      if(confirm("¿Seguro que quieres borrar el prompt personalizado y volver al código original?")) {
+                      setIsLoading(true);
+                      try {
                         await fetch("/api/settings", {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({ key: "ai_prompt", value: "" })
                         });
                         setPrompt("");
-                        addToast("¡Restablecido al código base!", "success");
+                        addToast("¡Cerebro restablecido al código base! 💎", "success");
+                      } catch(e) {
+                        addToast("Error al restablecer", "error");
+                      } finally {
+                        setIsLoading(false);
                       }
                     }}
-                    className="btn secondary"
-                    style={{ padding: '0.85rem 1.5rem', borderRadius: '15px' }}
+                    className="btn"
+                    style={{ 
+                      padding: '0.85rem 1.5rem', 
+                      borderRadius: '15px', 
+                      background: 'rgba(255, 71, 87, 0.1)', 
+                      color: '#ff4757', 
+                      border: '1px solid rgba(255, 71, 87, 0.2)',
+                      fontWeight: 800,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      cursor: 'pointer'
+                    }}
                   >
-                    Restablecer
+                    <RefreshCw size={18} /> Restablecer Fábrica
                   </button>
                   <button 
                     onClick={savePrompt}
