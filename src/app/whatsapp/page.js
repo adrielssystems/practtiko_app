@@ -38,10 +38,6 @@ export default async function WhatsAppPage() {
             Supervisa las conversaciones de Evolution API en tiempo real.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <Link href="/instagram/logs" className="btn-primary" style={{ background: 'none', border: '1px solid #ddd', color: '#666', boxShadow: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-            <Activity size={16} /> Ver Consola de Logs
-          </Link>
         </div>
       </header>
 

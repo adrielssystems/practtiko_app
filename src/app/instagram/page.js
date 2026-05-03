@@ -46,13 +46,6 @@ export default async function InstagramMonitoringPage() {
             Supervisa las conversaciones en tiempo real entre tus clientes y el Agente Virtual de Practiiko.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <Link href="/instagram/logs" className="btn secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-            <Activity size={16} /> Ver Consola de Logs
-          </Link>
-          <Link href="/instagram/config" className="btn secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-            <Settings size={16} /> Configurar IA
-          </Link>
         </div>
       </header>
 
