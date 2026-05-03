@@ -67,7 +67,7 @@ export async function POST(req) {
               }
 
               // Procesar en segundo plano para no bloquear a Meta
-              processChatMessage(userMessage, senderId, 'dm').then(aiResponse => {
+              processChatMessage(userMessage, senderId, 'dm', null, userInfo?.name || userInfo?.username || 'Cliente').then(aiResponse => {
                 sendInstagramMessage(senderId, aiResponse);
               }).catch(e => console.error("[ERROR ASYNC DM]:", e));
             }
@@ -102,7 +102,7 @@ export async function POST(req) {
                 [senderId, username, username]
               );
 
-              processChatMessage(userMessage, senderId, 'comment', commentId).then(aiResponse => {
+              processChatMessage(userMessage, senderId, 'comment', commentId, username || 'Cliente').then(aiResponse => {
                 replyToInstagramComment(commentId, aiResponse);
               }).catch(e => console.error("[ERROR ASYNC COMMENT]:", e));
             }

@@ -77,7 +77,7 @@ export async function POST(req) {
 
       // 4. Procesar con IA y responder (en segundo plano para no bloquear el webhook)
       console.log(`[WHATSAPP] Procesando mensaje para ${senderNumber}...`);
-      processChatMessage(userMessage, senderNumber, 'whatsapp').then(async (aiResponse) => {
+      processChatMessage(userMessage, senderNumber, 'whatsapp', null, pushName).then(async (aiResponse) => {
         // Enviar a WhatsApp
         await sendWhatsAppMessage(senderNumber, aiResponse);
         console.log(`[WHATSAPP] Respuesta enviada a ${senderNumber}`);
