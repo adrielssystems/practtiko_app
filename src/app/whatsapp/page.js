@@ -49,7 +49,12 @@ export default async function WhatsAppMonitoringPage() {
         ) : (
           conversations.map((conv) => (
             <Link key={conv.session_id} href={`/whatsapp/${conv.session_id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-              <div className="card glass conversation-card" style={{ padding: '1.5rem', transition: 'all 0.2s', cursor: 'pointer' }}>
+              <div className="card glass conversation-card" style={{ 
+                padding: '1.5rem', 
+                transition: 'all 0.2s', 
+                cursor: 'pointer',
+                display: 'block' 
+              }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <div style={{ width: '40px', height: '40px', borderRadius: '20px', background: '#25D366', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
@@ -73,14 +78,6 @@ export default async function WhatsAppMonitoringPage() {
           ))
         )}
       </div>
-
-      <style jsx>{`
-        .conversation-card:hover {
-          transform: translateY(-4px);
-          border-color: #25D366;
-          box-shadow: 0 12px 30px rgba(37, 211, 102, 0.1);
-        }
-      `}</style>
     </div>
   );
 }

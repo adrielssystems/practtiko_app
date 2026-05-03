@@ -5,7 +5,6 @@ import { MessageSquare, Instagram, Clock, User, ChevronRight } from "lucide-reac
 
 async function getConversations() {
   try {
-    // Obtenemos las últimas sesiones de chat únicas
     const res = await query(`
       SELECT 
         session_id, 
@@ -50,7 +49,12 @@ export default async function InstagramMonitoringPage() {
         ) : (
           conversations.map((conv) => (
             <Link key={conv.session_id} href={`/instagram/${conv.session_id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-              <div className="card glass conversation-card" style={{ padding: '1.5rem', transition: 'all 0.2s', cursor: 'pointer' }}>
+              <div className="card glass conversation-card" style={{ 
+                padding: '1.5rem', 
+                transition: 'all 0.2s', 
+                cursor: 'pointer',
+                display: 'block' 
+              }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <div style={{ width: '40px', height: '40px', borderRadius: '20px', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
@@ -77,14 +81,6 @@ export default async function InstagramMonitoringPage() {
           ))
         )}
       </div>
-
-      <style jsx>{`
-        .conversation-card:hover {
-          transform: translateY(-4px);
-          border-color: var(--primary);
-          box-shadow: 0 12px 30px rgba(4, 119, 191, 0.1);
-        }
-      `}</style>
     </div>
   );
 }
