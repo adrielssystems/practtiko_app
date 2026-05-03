@@ -12,7 +12,7 @@ import { HumanMessage, AIMessage } from "@langchain/core/messages";
 
 const productsTool = new DynamicTool({
   name: "consultar_productos",
-  description: "Úsalo SIEMPRE que el cliente pregunte por un producto, precio o disponibilidad. Sirve para verificar si el producto existe en el catálogo de Practiiko. Si no encuentras nada similar, informa que no manejamos ese rubro.",
+  description: "DEBES usar esta herramienta SIEMPRE que el cliente mencione un producto (sofá, cama, etc.) para verificar si existe en el catálogo. Si no hay resultados, informa que no manejamos ese rubro.",
   func: async (input) => {
     try {
       const res = await query(`
@@ -47,7 +47,7 @@ RESTRICCIONES ABSOLUTAS — VIOLARLAS ES ERROR CRÍTICO:
 1. Tu respuesta debe ser ÚNICAMENTE el mensaje que el cliente leerá en Instagram DM. Nada más.
 2. PROHIBIDO incluir: "Pensando:", "Razonamiento:", "Análisis:", "[SYSTEM PROMPT]", "Nota interna:", ni cualquier metatexto.
 3. PROHIBIDO repetir saludos o nombres después del primer mensaje de la conversación.
-4. PROHIBIDO inventar productos. Si el cliente pregunta por algo que no está en el catálogo (ej: camas, sillas), informa amablemente que Practiiko se especializa en Sofás y Modulares de lujo.
+4. PROHIBIDO inventar productos. Solo menciona lo que confirme la herramienta consultar_productos.
 5. PROHIBIDO dar precios sin tener: Modelo Exacto + Ciudad del cliente.
 6. PROHIBIDO mencionar MRW o Zoom. Envíos nacionales: solo TEALCA.
 7. PROHIBIDO asociar Zelle con tasa BCV. Zelle siempre es precio en divisas.
