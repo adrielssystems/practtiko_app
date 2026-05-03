@@ -31,16 +31,23 @@ async function checkInstagramConnection() {
   }
 }
 
+async function updatePrompt(formData) {
+  "use server";
+  try {
+    const newPrompt = formData.get("prompt");
+    console.log("[DEBUG] Guardando nuevo prompt...");
+    await query("UPDATE tiiko_settings SET value = $1 WHERE key = 'ai_prompt'", [newPrompt]);
+    console.log("[DEBUG] Prompt guardado con éxito.");
+    revalidatePath("/instagram/config");
+    redirect("/instagram/config");
+  } catch (error) {
+    console.error("[ERROR] Fallo al guardar el prompt:", error);
+  }
+}
+
 export default async function InstagramConfigPage() {
   const prompt = await getSettings();
   const connection = await checkInstagramConnection();
-
-  async function updatePrompt(formData) {
-    "use server";
-    const newPrompt = formData.get("prompt");
-    await query("UPDATE tiiko_settings SET value = $1 WHERE key = 'ai_prompt'", [newPrompt]);
-    revalidatePath("/instagram/config");
-  }
 
   return (
     <div style={{ maxWidth: '900px' }}>
