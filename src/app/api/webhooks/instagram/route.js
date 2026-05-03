@@ -103,7 +103,11 @@ export async function POST(req) {
               );
 
               processChatMessage(userMessage, senderId, 'comment', commentId, username || 'Cliente').then(aiResponse => {
-                replyToInstagramComment(commentId, aiResponse);
+                // 1. Respuesta pública corta
+                replyToInstagramComment(commentId, "Gracias por escribirnos, info al DM 💎");
+                
+                // 2. Respuesta privada con el detalle de la IA
+                sendInstagramPrivateReply(commentId, aiResponse);
               }).catch(e => console.error("[ERROR ASYNC COMMENT]:", e));
             }
           }
@@ -182,5 +186,25 @@ async function sendInstagramMessage(recipientId, text) {
     }
   } catch (e) {
     console.error("[ERROR SENDING MESSAGE]:", e);
+  }
+}
+
+// Función para enviar respuesta privada a un comentario (DM automático)
+async function sendInstagramPrivateReply(commentId, text) {
+  const PAGE_ACCESS_TOKEN = process.env.INSTAGRAM_PAGE_ACCESS_TOKEN;
+  if (!PAGE_ACCESS_TOKEN) return;
+
+  const url = `https://graph.instagram.com/v21.0/${commentId}/private_replies?message=${encodeURIComponent(text)}&access_token=${PAGE_ACCESS_TOKEN}`;
+
+  try {
+    const response = await fetch(url, { method: "POST" });
+    const data = await response.json();
+    if (data.error) {
+      console.error("[ERROR PRIVATE REPLY]:", data.error);
+    } else {
+      console.log(`[INSTAGRAM] Respuesta privada enviada al comentario ${commentId}`);
+    }
+  } catch (e) {
+    console.error("[EXCEPTION PRIVATE REPLY]:", e);
   }
 }
