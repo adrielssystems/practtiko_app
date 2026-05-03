@@ -1,4 +1,5 @@
 import { query } from "@/lib/db";
+export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { Plus, Search, Filter, MoreHorizontal, Edit, Trash2, Package } from "lucide-react";
 
