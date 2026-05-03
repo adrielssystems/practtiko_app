@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
 import { processChatMessage } from "@/lib/ai/agent";
 import { query } from "@/lib/db";
 
@@ -11,19 +12,12 @@ export async function GET(req) {
 
   const VERIFY_TOKEN = process.env.INSTAGRAM_VERIFY_TOKEN;
 
-  console.log("--- INTENTO DE VALIDACIÓN DE WEBHOOK ---");
-  console.log("Token esperado (Easypanel):", VERIFY_TOKEN);
-  console.log("Token recibido (Meta):", token);
-  console.log("Modo:", mode);
+  console.log(`[DEBUG] Validando Webhook. Recibido: ${token}, Esperado: ${VERIFY_TOKEN}`);
 
   if (mode === "subscribe" && token === VERIFY_TOKEN) {
-    console.log("✅ Webhook Validado con éxito");
-    return new Response(challenge, {
-      headers: { 'Content-Type': 'text/plain' }
-    });
+    return new Response(challenge, { status: 200 });
   }
 
-  console.error("❌ Fallo en la validación del Webhook: Tokens no coinciden");
   return new Response("Forbidden", { status: 403 });
 }
 
