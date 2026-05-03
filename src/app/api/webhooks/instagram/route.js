@@ -29,6 +29,7 @@ export async function POST(req) {
     // Verificamos que sea un mensaje de Instagram
     if (body.object === "instagram") {
       for (const entry of body.entry) {
+        if (!entry.messaging) continue;
         for (const messaging of entry.messaging) {
           if (messaging.message && !messaging.message.is_echo) {
             const senderId = messaging.sender.id;
