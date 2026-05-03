@@ -153,22 +153,41 @@ export default function SettingsPage() {
                     Define la personalidad, restricciones y flujo de cierre comercial del Agente Virtual.
                   </p>
                 </div>
-                <button 
-                  onClick={savePrompt}
-                  disabled={isLoading}
-                  className="btn-primary"
-                  style={{ 
-                    padding: '0.85rem 2.5rem', 
-                    borderRadius: '15px', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '0.75rem',
-                    boxShadow: '0 10px 25px rgba(4, 119, 191, 0.2)'
-                  }}
-                >
-                  {isLoading ? <RefreshCw className="animate-spin" size={20} /> : <Save size={20} />}
-                  {isLoading ? 'Actualizando...' : 'Guardar Cambios'}
-                </button>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <button 
+                    onClick={async () => {
+                      if(confirm("¿Seguro que quieres borrar el prompt personalizado y volver al código original?")) {
+                        await fetch("/api/settings", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ key: "ai_prompt", value: "" })
+                        });
+                        setPrompt("");
+                        addToast("¡Restablecido al código base!", "success");
+                      }
+                    }}
+                    className="btn secondary"
+                    style={{ padding: '0.85rem 1.5rem', borderRadius: '15px' }}
+                  >
+                    Restablecer
+                  </button>
+                  <button 
+                    onClick={savePrompt}
+                    disabled={isLoading}
+                    className="btn-primary"
+                    style={{ 
+                      padding: '0.85rem 2.5rem', 
+                      borderRadius: '15px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.75rem',
+                      boxShadow: '0 10px 25px rgba(4, 119, 191, 0.2)'
+                    }}
+                  >
+                    {isLoading ? <RefreshCw className="animate-spin" size={20} /> : <Save size={20} />}
+                    {isLoading ? 'Actualizando...' : 'Guardar Cambios'}
+                  </button>
+                </div>
               </div>
 
               <div style={{ position: 'relative' }}>
