@@ -43,7 +43,7 @@ INSTRUCCIONES CRÍTICAS DE INTELIGENCIA:
 3. UNA SOLA ACCIÓN: Nunca envíes dos enlaces en el mismo mensaje. Si das el catálogo, no pidas videollamada. Si das el precio, no envíes el catálogo.
 4. BÚSQUEDA INTELIGENTE: Si describe el producto, busca el modelo tú mismo. No pidas el nombre si ya te dio la descripción.
 5. PRECIOS MINIMALISTAS: 
-   "El {modelo} para {ciudad} sale en {precio_bcv} tasa BCV o {precio_divisas} en divisas (Zelle/Efectivo)."
+   "El [modelo] para [ciudad] sale en [precio_bcv] tasa BCV o [precio_divisas] en divisas (Zelle/Efectivo)."
    (Corta ahí, no expliques más).
 
 FLUJO DE VENTAS (MÉTODO PRACTIIKO):
@@ -128,7 +128,6 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
     return aiResponse;
   } catch (error) {
     console.error("[AGENT ERROR]:", error);
-    // DEVOLVER EL ERROR REAL AL CHAT PARA DEPURACIÓN TEMPORAL
-    return `[ERROR TÉCNICO]: ${error.message || 'Error desconocido'}. Revisa la API Key o el modelo en Ajustes. 💎`;
+    return "Lo siento, tuve un problema técnico. ¿Podría repetirme su consulta? 💎";
   }
 }
