@@ -14,7 +14,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import Link from "next/link";
-import toast from "react-hot-toast";
+import { useToast } from "@/components/Toast";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("ai");
@@ -23,6 +23,8 @@ export default function SettingsPage() {
   const [logs, setLogs] = useState([]);
   const [logsLoading, setLogsLoading] = useState(false);
   const [filter, setFilter] = useState("all");
+
+  const { addToast } = useToast();
 
   // Cargar prompt inicial
   useEffect(() => {
@@ -47,7 +49,7 @@ export default function SettingsPage() {
       const data = await res.json();
       setLogs(data.logs || []);
     } catch (e) {
-      toast.error("Error al cargar logs");
+      addToast("Error al cargar logs", "error");
     } finally {
       setLogsLoading(false);
     }
@@ -62,12 +64,12 @@ export default function SettingsPage() {
         body: JSON.stringify({ key: "ai_prompt", value: prompt })
       });
       if (res.ok) {
-        toast.success("Prompt actualizado correctamente");
+        addToast("Prompt actualizado correctamente", "success");
       } else {
-        toast.error("Error al guardar el prompt");
+        addToast("Error al guardar el prompt", "error");
       }
     } catch (e) {
-      toast.error("Error de conexión");
+      addToast("Error de conexión", "error");
     } finally {
       setIsLoading(false);
     }
