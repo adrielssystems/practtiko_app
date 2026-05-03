@@ -1,94 +1,131 @@
 import { query } from "@/lib/db";
 export const dynamic = "force-dynamic";
 import Link from "next/link";
-import { ArrowLeft, User, Bot, Phone } from "lucide-react";
+import { ChevronLeft, User, Smartphone, Clock } from "lucide-react";
 
-async function getChatHistory(sessionId) {
+async function getChatMessages(id) {
   try {
-    const res = await query(`
-      SELECT * FROM tiiko_whatsapp_memory 
-      WHERE session_id = $1 
-      ORDER BY created_at ASC
-    `, [sessionId]);
-    
-    return res.rows.map(row => ({
-      id: row.id,
-      timestamp: row.created_at,
-      ...row.message
-    }));
+    const res = await query(
+      "SELECT message, created_at FROM whatsapp_messages WHERE session_id = $1 ORDER BY created_at ASC",
+      [id]
+    );
+    return res.rows;
   } catch (e) {
-    console.error("Error fetching whatsapp history:", e);
+    console.error(e);
     return [];
   }
 }
 
-export default async function WhatsAppDetailPage({ params }) {
-  const { id } = await params;
-  const history = await getChatHistory(id);
+async function getCustomerInfo(id) {
+  try {
+    const res = await query("SELECT push_name FROM whatsapp_customers WHERE id = $1", [id]);
+    return res.rows[0];
+  } catch (e) {
+    return null;
+  }
+}
+
+export default async function WhatsAppChatPage({ params }) {
+  const { id } = params;
+  const messages = await getChatMessages(id);
+  const customer = await getCustomerInfo(id);
 
   return (
-    <div>
-      <header style={{ marginBottom: '2rem' }}>
-        <Link href="/whatsapp" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--muted-foreground)', textDecoration: 'none', marginBottom: '1rem' }}>
-          <ArrowLeft size={16} />
-          Volver al listado
+    <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto', height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <header style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+        <Link href="/whatsapp" style={{ color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center' }}>
+          <ChevronLeft size={24} />
         </Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-           <div style={{ background: '#25D366', padding: '0.4rem', borderRadius: '8px', display: 'flex' }}>
-            <Phone color="white" size={20} />
-          </div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800 }}>Chat WhatsApp: {id}</h1>
+        <div style={{ 
+          width: '45px', 
+          height: '45px', 
+          borderRadius: '12px', 
+          background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white'
+        }}>
+          <User size={24} />
+        </div>
+        <div>
+          <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>
+            {customer?.push_name || `+${id}`}
+          </h2>
+          <span style={{ fontSize: '0.75rem', color: '#25D366', fontWeight: 600 }}>WhatsApp Business</span>
         </div>
       </header>
 
-      <div className="card glass" style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '2rem', minHeight: '60vh' }}>
-        {history.length === 0 ? (
-          <p style={{ textAlign: 'center', color: 'var(--muted-foreground)' }}>No hay mensajes en esta conversación.</p>
+      <div style={{ 
+        flex: 1, 
+        overflowY: 'auto', 
+        padding: '1.5rem', 
+        background: '#f8f9fa', 
+        borderRadius: '24px',
+        boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.05)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1rem'
+      }}>
+        {messages.length === 0 ? (
+          <div style={{ textAlign: 'center', color: 'var(--muted-foreground)', marginTop: '4rem' }}>
+            No hay mensajes en esta conversación.
+          </div>
         ) : (
-          history.map((msg, index) => {
-            const isBot = msg.role === 'assistant' || msg.role === 'ai' || msg.type === 'ai';
+          messages.map((m, idx) => {
+            const data = typeof m.message === 'string' ? JSON.parse(m.message) : m.message;
+            const isBot = data.role === 'assistant';
+            
             return (
-              <div key={index} style={{ 
-                display: 'flex', 
-                flexDirection: 'column',
-                alignItems: isBot ? 'flex-start' : 'flex-end',
-                width: '100%'
+              <div key={idx} style={{ 
+                alignSelf: isBot ? 'flex-start' : 'flex-end',
+                maxWidth: '80%',
+                padding: '1rem 1.25rem',
+                borderRadius: isBot ? '20px 20px 20px 5px' : '20px 20px 5px 20px',
+                background: isBot ? 'white' : '#25D366',
+                color: isBot ? '#1a1a1a' : 'white',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+                position: 'relative'
               }}>
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.5rem', 
-                  marginBottom: '0.25rem',
-                  flexDirection: isBot ? 'row' : 'row-reverse'
-                }}>
-                  {isBot ? <Bot size={14} color="#128C7E" /> : <User size={14} color="#25D366" />}
-                  <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted-foreground)' }}>
-                    {isBot ? 'AGENTE VIRTUAL' : 'CLIENTE'}
-                  </span>
+                <div style={{ fontSize: '0.95rem', lineHeight: '1.5' }}>
+                  {data.content}
                 </div>
-                
                 <div style={{ 
-                  maxWidth: '85%',
-                  padding: '1rem',
-                  borderRadius: isBot ? '2px 16px 16px 16px' : '16px 2px 16px 16px',
-                  background: isBot ? 'rgba(18, 140, 126, 0.05)' : 'rgba(37, 211, 102, 0.05)',
-                  border: `1px solid ${isBot ? 'rgba(18, 140, 126, 0.1)' : 'rgba(37, 211, 102, 0.1)'}`,
-                  color: 'var(--foreground)',
-                  fontSize: '0.9375rem',
-                  lineHeight: 1.5,
-                  whiteSpace: 'pre-wrap'
+                  fontSize: '0.65rem', 
+                  marginTop: '0.4rem', 
+                  opacity: 0.7, 
+                  textAlign: 'right',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  gap: '0.3rem'
                 }}>
-                  {msg.content || msg.text || JSON.stringify(msg)}
+                  <Clock size={10} />
+                  {new Date(m.created_at).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })}
                 </div>
-                
-                <span style={{ fontSize: '0.65rem', color: 'var(--muted-foreground)', marginTop: '0.25rem' }}>
-                   {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
+                {isBot && (
+                  <div style={{ 
+                    position: 'absolute', 
+                    top: '-10px', 
+                    left: '0', 
+                    fontSize: '0.6rem', 
+                    fontWeight: 800, 
+                    color: '#128C7E',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                  }}>
+                    Agente Virtual
+                  </div>
+                )}
               </div>
             );
           })
         )}
       </div>
+      
+      <footer style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.8rem', color: 'var(--muted-foreground)' }}>
+        Esta conversación es gestionada automáticamente por la IA de Practiiko 💎
+      </footer>
     </div>
   );
 }
