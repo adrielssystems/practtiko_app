@@ -39,10 +39,10 @@ export default function LoginPage() {
   return (
     <div className="login-container">
       <div className="login-card glass">
-        <div className="login-header">
-          <h1><span>Pract</span><span style={{ color: 'var(--primary)' }}>ii</span><span>ko</span></h1>
-          <p>Panel de Autogestión</p>
-        </div>
+          <div className="login-header">
+            <img src="/logo.png" alt="Practiiko Logo" style={{ height: '50px', marginBottom: '1rem' }} />
+            <p>Panel de Autogestión</p>
+          </div>
         
         <form onSubmit={handleSubmit} className="login-form">
           {error && <div className="error-message">{error}</div>}

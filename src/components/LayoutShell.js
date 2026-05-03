@@ -31,9 +31,9 @@ export default function LayoutShell({ children }) {
   return (
     <div className="dashboard-layout">
       <aside className="sidebar">
-        <div className="sidebar-logo">
-          <span>Pract</span><span style={{ color: 'var(--primary)' }}>ii</span><span>ko</span>
-        </div>
+          <div className="sidebar-logo">
+            <img src="/logo.png" alt="Practiiko" style={{ height: '32px' }} />
+          </div>
         
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
           {navItems.map((item) => {
