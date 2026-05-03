@@ -69,7 +69,7 @@ export default async function InstagramMonitoringPage() {
                     <div>
                       <h4 style={{ margin: 0, fontWeight: 700 }}>Cliente: {conv.session_id.substring(0, 10)}...</h4>
                       <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <Clock size={12} /> {new Date(conv.last_message).toLocaleString()}
+                        <Clock size={12} /> {new Date(conv.last_message).toLocaleString('es-VE', { timeZone: 'America/Caracas' })}
                       </span>
                     </div>
                   </div>
