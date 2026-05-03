@@ -50,7 +50,7 @@ export default async function WhatsAppChatPage({ params }) {
         </div>
         <div>
           <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>
-            {customer?.push_name || `+${id}`}
+            {customer?.full_name || `+${id}`}
           </h2>
           <span style={{ fontSize: '0.75rem', color: '#25D366', fontWeight: 600 }}>WhatsApp Business</span>
         </div>

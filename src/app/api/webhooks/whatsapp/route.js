@@ -36,10 +36,11 @@ export async function POST(req) {
     // Loguear el webhook para monitoreo (opcional, pero útil al principio)
     await query("INSERT INTO webhook_logs (event_type, payload) VALUES ($1, $2)", ['whatsapp', JSON.stringify(body)]);
 
-    // Evolution API envía eventos con el campo "event"
-    const eventType = body.event;
+    // Evolution API envía eventos con el campo "event" o "type"
+    const eventType = (body.event || body.type || "").toLowerCase();
+    console.log(`[WHATSAPP DEBUG] Evento recibido: ${eventType}`);
     
-    if (eventType === "messages.upsert") {
+    if (eventType === "messages.upsert" || eventType === "messages-upsert") {
       const messageData = body.data;
       const key = messageData.key;
       const remoteJid = key.remoteJid;
@@ -71,9 +72,11 @@ export async function POST(req) {
       );
 
       // 4. Procesar con IA y responder (en segundo plano para no bloquear el webhook)
+      console.log(`[WHATSAPP] Procesando mensaje para ${senderNumber}...`);
       processChatMessage(userMessage, senderNumber, 'whatsapp').then(async (aiResponse) => {
         // Enviar a WhatsApp
         await sendWhatsAppMessage(senderNumber, aiResponse);
+        console.log(`[WHATSAPP] Respuesta enviada a ${senderNumber}`);
         
         // Guardar en historial
         await query(
@@ -84,6 +87,7 @@ export async function POST(req) {
             JSON.stringify({ role: 'assistant', content: aiResponse })
           ]
         );
+        console.log(`[WHATSAPP] Conversación guardada en DB para ${senderNumber}`);
       }).catch(e => console.error("[ERROR WHATSAPP AI]:", e));
     }
 
