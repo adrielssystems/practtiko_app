@@ -64,38 +64,81 @@ export default async function InstagramMonitoringPage() {
             <Link key={conv.session_id} href={`/instagram/${conv.session_id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="card glass conversation-card" style={{ 
                 padding: '1.5rem', 
-                transition: 'all 0.2s', 
-                cursor: 'pointer',
-                display: 'block' 
+                borderRadius: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+                transition: 'all 0.3s ease',
+                background: 'white',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                border: '1px solid #f0f0f0'
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '20px', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                      <User size={20} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, overflow: 'hidden' }}>
+                    <div style={{ 
+                      width: '48px', 
+                      height: '48px', 
+                      borderRadius: '14px', 
+                      background: 'linear-gradient(135deg, var(--primary) 0%, #035a91 100%)', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      color: 'white',
+                      flexShrink: 0
+                    }}>
+                      <User size={24} />
                     </div>
-                    <div>
-                      <h4 style={{ margin: 0, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        {conv.full_name || (conv.session_id.startsWith('test-') ? conv.session_id : `Cliente: ${conv.session_id.substring(0, 10)}...`)}
-                        {conv.latest_source === 'comment' && (
-                          <span style={{ fontSize: '0.6rem', background: 'var(--accent)', color: 'white', padding: '2px 6px', borderRadius: '10px', textTransform: 'uppercase' }}>Comentario</span>
-                        )}
-                        {conv.latest_source === 'dm' && (
-                          <span style={{ fontSize: '0.6rem', background: 'var(--primary)', color: 'white', padding: '2px 6px', borderRadius: '10px', textTransform: 'uppercase' }}>Mensaje</span>
-                        )}
+                    <div style={{ overflow: 'hidden' }}>
+                      <h4 style={{ 
+                        margin: 0, 
+                        fontWeight: 700, 
+                        fontSize: '1rem',
+                        color: '#1a1a1a',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {conv.full_name || (conv.session_id.startsWith('test-') || conv.session_id.startsWith('simul') ? conv.session_id : `Cliente: ${conv.session_id.substring(0, 10)}...`)}
                       </h4>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <Clock size={12} /> {new Date(conv.last_message).toLocaleString('es-VE', { timeZone: 'America/Caracas' })}
-                      </span>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem' }}>
+                        <Clock size={12} /> {new Date(conv.last_message).toLocaleString('es-VE', { timeZone: 'America/Caracas', hour: '2-digit', minute: '2-digit' })}
+                      </div>
                     </div>
                   </div>
-                  <div style={{ background: 'rgba(4, 119, 191, 0.1)', color: 'var(--primary)', padding: '0.25rem 0.6rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700 }}>
-                    {conv.total_messages} msg
+
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem', flexShrink: 0 }}>
+                    <div style={{ 
+                      background: 'rgba(4, 119, 191, 0.1)', 
+                      color: 'var(--primary)', 
+                      padding: '0.25rem 0.6rem', 
+                      borderRadius: '8px', 
+                      fontSize: '0.7rem', 
+                      fontWeight: 800
+                    }}>
+                      {conv.total_messages} MSG
+                    </div>
+                    {conv.latest_source === 'comment' && (
+                      <span style={{ fontSize: '0.6rem', background: '#F28705', color: 'white', padding: '2px 8px', borderRadius: '6px', fontWeight: 800, textTransform: 'uppercase' }}>Comentario</span>
+                    )}
+                    {conv.latest_source === 'dm' && (
+                      <span style={{ fontSize: '0.6rem', background: 'var(--primary)', color: 'white', padding: '2px 8px', borderRadius: '6px', fontWeight: 800, textTransform: 'uppercase' }}>Mensaje</span>
+                    )}
                   </div>
                 </div>
                 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', color: 'var(--primary)', fontSize: '0.875rem', fontWeight: 600 }}>
+                <div style={{ 
+                  marginTop: '0.5rem',
+                  paddingTop: '1rem',
+                  borderTop: '1px solid #f5f5f5',
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center', 
+                  color: 'var(--primary)', 
+                  fontSize: '0.85rem', 
+                  fontWeight: 600 
+                }}>
                   Ver conversación completa
-                  <ChevronRight size={16} />
+                  <ChevronRight size={18} />
                 </div>
               </div>
             </Link>
