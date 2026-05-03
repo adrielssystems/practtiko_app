@@ -1,8 +1,11 @@
 import { query } from "@/lib/db";
 export const dynamic = "force-dynamic";
 import Link from "next/link";
-import { MessageSquare, MessageCircle, Clock, User, ChevronRight, Settings, Activity } from "lucide-react";
+import { MessageSquare, MessageCircle, Clock, User, ChevronRight, Settings, Activity, Trash2 } from "lucide-react";
 import BotSimulator from "@/components/Instagram/BotSimulator";
+
+// Componente del botón de borrar para manejar el estado del lado del cliente
+import DeleteChatButton from "@/components/Instagram/DeleteChatButton";
 
 async function getConversations() {
   try {
@@ -14,6 +17,7 @@ async function getConversations() {
         (SELECT full_name FROM instagram_customers WHERE id = session_id LIMIT 1) as full_name,
         (SELECT source FROM instagram_messages m2 WHERE m2.session_id = instagram_messages.session_id ORDER BY created_at DESC LIMIT 1) as latest_source
       FROM instagram_messages
+      WHERE session_id != 'practiiko'
       GROUP BY session_id
       ORDER BY last_message DESC
       LIMIT 20
@@ -107,15 +111,18 @@ export default async function InstagramMonitoringPage() {
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem', flexShrink: 0 }}>
-                    <div style={{ 
-                      background: 'rgba(4, 119, 191, 0.1)', 
-                      color: 'var(--primary)', 
-                      padding: '0.25rem 0.6rem', 
-                      borderRadius: '8px', 
-                      fontSize: '0.7rem', 
-                      fontWeight: 800
-                    }}>
-                      {conv.total_messages} MSG
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <DeleteChatButton sessionId={conv.session_id} />
+                      <div style={{ 
+                        background: 'rgba(4, 119, 191, 0.1)', 
+                        color: 'var(--primary)', 
+                        padding: '0.25rem 0.6rem', 
+                        borderRadius: '8px', 
+                        fontSize: '0.7rem', 
+                        fontWeight: 800
+                      }}>
+                        {conv.total_messages} MSG
+                      </div>
                     </div>
                     {conv.latest_source === 'comment' && (
                       <span style={{ fontSize: '0.6rem', background: '#F28705', color: 'white', padding: '2px 8px', borderRadius: '6px', fontWeight: 800, textTransform: 'uppercase' }}>Comentario</span>
