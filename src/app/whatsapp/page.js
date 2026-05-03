@@ -93,7 +93,11 @@ export default async function WhatsAppPage() {
                         {conv.push_name || `+${conv.session_id}`}
                       </h4>
                       <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem' }}>
-                        <Clock size={12} /> {new Date(conv.last_message).toLocaleString('es-VE', { timeZone: 'America/Caracas', hour: '2-digit', minute: '2-digit' })}
+                        <Clock size={12} /> {new Date(conv.last_message).toLocaleString('es-VE', { 
+                          timeZone: 'America/Caracas', 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
                       </div>
                     </div>
                   </div>
