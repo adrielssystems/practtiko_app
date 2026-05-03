@@ -11,9 +11,11 @@ async function getSettings() {
 }
 
 async function checkInstagramConnection() {
-  const token = process.env.INSTAGRAM_PAGE_ACCESS_TOKEN;
-  if (!token) return { status: 'error', message: 'Token de acceso no configurado en Easypanel.' };
+  const rawToken = process.env.INSTAGRAM_PAGE_ACCESS_TOKEN;
+  if (!rawToken) return { status: 'error', message: 'Token de acceso no configurado en Easypanel.' };
   
+  const token = rawToken.trim();
+
   try {
     const res = await fetch(`https://graph.facebook.com/v21.0/me?access_token=${token}`);
     const data = await res.json();
