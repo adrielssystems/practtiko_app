@@ -78,9 +78,8 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
       configuration: {
         baseURL: process.env.DEEPSEEK_API_URL || "https://api.deepseek.com",
       },
-      modelName: "deepseek-v4-flash",
+      modelName: "deepseek-chat",
       temperature: 0.1,
-      maxTokens: 2000,
     });
 
     const prompt = ChatPromptTemplate.fromMessages([
