@@ -13,11 +13,13 @@ export default function NewProductPage() {
   
   const [formData, setFormData] = useState({
     name: "",
+    code: "",
     slug: "",
     description: "",
-    price: "",
+    price_bcv: "",
+    price_cash: "",
     category_id: "",
-    status: "draft",
+    status: "active",
     stock: "0",
     images: []
   });
@@ -103,23 +105,36 @@ export default function NewProductPage() {
                   required
                 />
               </div>
-              <div className="form-group">
-                <label>Slug (URL)</label>
-                <input 
-                  type="text" 
-                  className="input-field" 
-                  placeholder="sofa-modular-practiiko"
-                  value={formData.slug}
-                  onChange={(e) => setFormData({...formData, slug: e.target.value})}
-                  required
-                />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label>Código (SKU)</label>
+                  <input 
+                    type="text" 
+                    className="input-field" 
+                    placeholder="Ej. C002+K3217-1"
+                    value={formData.code}
+                    onChange={(e) => setFormData({...formData, code: e.target.value})}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Slug (URL)</label>
+                  <input 
+                    type="text" 
+                    className="input-field" 
+                    placeholder="sofa-modular-practiiko"
+                    value={formData.slug}
+                    onChange={(e) => setFormData({...formData, slug: e.target.value})}
+                    required
+                  />
+                </div>
               </div>
               <div className="form-group">
                 <label>Descripción</label>
                 <textarea 
                   className="input-field" 
-                  style={{ minHeight: '150px', resize: 'vertical' }}
-                  placeholder="Describe las características, materiales y beneficios del producto..."
+                  style={{ minHeight: '120px', resize: 'vertical' }}
+                  placeholder="Describe las características del producto..."
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
                 ></textarea>
@@ -146,8 +161,8 @@ export default function NewProductPage() {
                   value={formData.status}
                   onChange={(e) => setFormData({...formData, status: e.target.value})}
                 >
-                  <option value="draft">Borrador</option>
                   <option value="active">Activo</option>
+                  <option value="draft">Borrador</option>
                   <option value="archived">Archivado</option>
                 </select>
               </div>
@@ -169,17 +184,29 @@ export default function NewProductPage() {
 
           {/* Pricing & Stock */}
           <div className="card glass">
-            <h2 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1.5rem' }}>Precio y Stock</h2>
+            <h2 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1.5rem' }}>Precios y Stock</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div className="form-group">
-                <label>Precio ($)</label>
+                <label>Precio 1 USD $ (BCV)</label>
                 <input 
                   type="number" 
                   step="0.01" 
                   className="input-field" 
                   placeholder="0.00"
-                  value={formData.price}
-                  onChange={(e) => setFormData({...formData, price: e.target.value})}
+                  value={formData.price_bcv}
+                  onChange={(e) => setFormData({...formData, price_bcv: e.target.value})}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Precio 2 USD $ (DIVISAS)</label>
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  className="input-field" 
+                  placeholder="0.00"
+                  value={formData.price_cash}
+                  onChange={(e) => setFormData({...formData, price_cash: e.target.value})}
                   required
                 />
               </div>

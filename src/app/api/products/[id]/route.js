@@ -47,9 +47,11 @@ export async function PUT(request, { params }) {
     const body = await request.json();
     const { 
       name, 
+      code,
       slug, 
       description, 
-      price, 
+      price_bcv, 
+      price_cash,
       category_id, 
       status, 
       stock, 
@@ -59,14 +61,12 @@ export async function PUT(request, { params }) {
     // 1. Update Product
     await query(
       `UPDATE products 
-       SET name = $1, slug = $2, description = $3, price = $4, category_id = $5, status = $6, stock = $7, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $8`,
-      [name, slug, description, price, category_id || null, status, stock, id]
+       SET name = $1, code = $2, slug = $3, description = $4, price_bcv = $5, price_cash = $6, category_id = $7, status = $8, stock = $9, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $10`,
+      [name, code, slug, description, price_bcv, price_cash, category_id || null, status, stock, id]
     );
 
-    // 2. Update Images (Delete old and insert new for simplicity, or sync)
-    // For simplicity in this version, we delete old image references and add new ones
-    // Note: This doesn't delete physical files from /data, which is fine for now
+    // 2. Update Images
     await query("DELETE FROM product_images WHERE product_id = $1", [id]);
 
     if (images && images.length > 0) {
@@ -95,7 +95,7 @@ export async function DELETE(request, { params }) {
 
     const { id } = await params;
 
-    // Deleting product (cascade will handle images reference)
+    // Deleting product
     await query("DELETE FROM products WHERE id = $1", [id]);
 
     return NextResponse.json({ success: true });
