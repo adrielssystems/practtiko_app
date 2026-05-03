@@ -18,7 +18,7 @@ async function getChatMessages(id) {
 
 async function getCustomerInfo(id) {
   try {
-    const res = await query("SELECT push_name FROM whatsapp_customers WHERE id = $1", [id]);
+    const res = await query("SELECT full_name FROM whatsapp_customers WHERE id = $1", [id]);
     return res.rows[0];
   } catch (e) {
     return null;

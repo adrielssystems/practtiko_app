@@ -34,7 +34,7 @@ export async function POST(req) {
     const body = await req.json();
     
     // Loguear el webhook para monitoreo (opcional, pero útil al principio)
-    await query("INSERT INTO webhook_logs (source, payload) VALUES ($1, $2)", ['whatsapp', JSON.stringify(body)]);
+    await query("INSERT INTO webhook_logs (event_type, payload) VALUES ($1, $2)", ['whatsapp', JSON.stringify(body)]);
 
     // Evolution API envía eventos con el campo "event"
     const eventType = body.event;
@@ -64,9 +64,9 @@ export async function POST(req) {
 
       // 3. Guardar/Actualizar cliente
       await query(
-        `INSERT INTO whatsapp_customers (id, push_name, last_seen) 
+        `INSERT INTO whatsapp_customers (id, full_name, last_seen) 
          VALUES ($1, $2, NOW()) 
-         ON CONFLICT (id) DO UPDATE SET push_name = $2, last_seen = NOW()`,
+         ON CONFLICT (id) DO UPDATE SET full_name = $2, last_seen = NOW()`,
         [senderNumber, pushName]
       );
 

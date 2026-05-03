@@ -101,16 +101,27 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
     // 2. Guardar en la tabla correspondiente
     // Nota: El webhook de WhatsApp ya guarda los mensajes, pero lo dejamos aquí por si se llama desde el simulador
     if (source !== 'whatsapp' || sessionId.startsWith('simul')) {
-      await query(
-        `INSERT INTO ${tableName} (session_id, message, source, comment_id) VALUES ($1, $2, $3, $4), ($1, $5, $3, $4)`,
-        [
-          sessionId, 
-          JSON.stringify({ role: 'user', content: message }), 
-          source === 'whatsapp' ? 'whatsapp' : source,
-          commentId,
-          JSON.stringify({ role: 'assistant', content: aiResponse })
-        ]
-      );
+      if (source === 'whatsapp') {
+        await query(
+          `INSERT INTO whatsapp_messages (session_id, message) VALUES ($1, $2), ($1, $3)`,
+          [
+            sessionId, 
+            JSON.stringify({ role: 'user', content: message }),
+            JSON.stringify({ role: 'assistant', content: aiResponse })
+          ]
+        );
+      } else {
+        await query(
+          `INSERT INTO instagram_messages (session_id, message, source, comment_id) VALUES ($1, $2, $3, $4), ($1, $5, $3, $4)`,
+          [
+            sessionId, 
+            JSON.stringify({ role: 'user', content: message }), 
+            source,
+            commentId,
+            JSON.stringify({ role: 'assistant', content: aiResponse })
+          ]
+        );
+      }
     }
 
     return aiResponse;

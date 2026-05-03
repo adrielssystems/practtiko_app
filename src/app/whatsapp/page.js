@@ -11,7 +11,7 @@ async function getConversations() {
         session_id, 
         MAX(created_at) as last_message,
         COUNT(*) as total_messages,
-        (SELECT push_name FROM whatsapp_customers WHERE id = session_id LIMIT 1) as push_name
+        (SELECT full_name FROM whatsapp_customers WHERE id = session_id LIMIT 1) as push_name
       FROM whatsapp_messages
       GROUP BY session_id
       ORDER BY last_message DESC
