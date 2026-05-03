@@ -100,12 +100,12 @@ export default function ImageUpload({ onImagesChange, initialImages = [] }) {
           cursor: pointer;
           transition: all 0.2s;
           border: 2px dashed var(--border);
-          background: rgba(255, 255, 255, 0.02);
+          background: #ffffff;
         }
 
         .dropzone:hover, .dropzone.active {
           border-color: var(--primary);
-          background: rgba(99, 102, 241, 0.05);
+          background: rgba(4, 119, 191, 0.02);
         }
 
         .dropzone.disabled {
@@ -123,8 +123,8 @@ export default function ImageUpload({ onImagesChange, initialImages = [] }) {
         }
 
         .dropzone-content p {
-          font-weight: 600;
-          color: white;
+          font-weight: 700;
+          color: var(--foreground);
         }
 
         .dropzone-content span {

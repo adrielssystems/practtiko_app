@@ -1,37 +1,36 @@
 :root {
-  /* Colors - Premium Indigo Palette for App/Dashboard */
-  --background: #09090b;
-  --foreground: #fafafa;
+  /* Official Practiiko Color Palette */
+  --primary: #0477BF;
+  --primary-rgb: 4, 119, 191;
+  --secondary: #F28705;
+  --secondary-rgb: 242, 135, 5;
   
-  --card: #0c0c0e;
-  --card-foreground: #fafafa;
+  --background: #f8f9fa;
+  --foreground: #181c21;
   
-  --popover: #09090b;
-  --popover-foreground: #fafafa;
+  --card: #ffffff;
+  --card-foreground: #181c21;
   
-  --primary: #6366f1;
-  --primary-foreground: #ffffff;
+  --popover: #ffffff;
+  --popover-foreground: #181c21;
   
-  --secondary: #18181b;
-  --secondary-foreground: #fafafa;
+  --muted: #f1f3f5;
+  --muted-foreground: #6c757d;
   
-  --muted: #18181b;
-  --muted-foreground: #a1a1aa;
-  
-  --accent: #6366f1;
-  --accent-foreground: #fafafa;
+  --accent: #f8f9fa;
+  --accent-foreground: #181c21;
   
   --destructive: #ef4444;
-  --destructive-foreground: #fafafa;
+  --destructive-foreground: #ffffff;
   
-  --border: rgba(255, 255, 255, 0.08);
-  --input: rgba(255, 255, 255, 0.05);
-  --ring: #6366f1;
+  --border: #e9ecef;
+  --input: #ffffff;
+  --ring: #0477BF;
   
   --radius: 0.75rem;
   
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  --gradient-primary: linear-gradient(135deg, #0477BF 0%, #035a91 100%);
   --gradient-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%);
 }
 
@@ -44,10 +43,14 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family: var(--font-work-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-plus-jakarta), sans-serif;
 }
 
 .dashboard-layout {
@@ -57,7 +60,7 @@ body {
 }
 
 .sidebar {
-  background: #0c0c0e;
+  background: #ffffff;
   border-right: 1px solid var(--border);
   padding: 2rem 1.5rem;
   display: flex;
@@ -69,9 +72,8 @@ body {
   font-weight: 800;
   letter-spacing: -0.05em;
   margin-bottom: 3rem;
-  background: linear-gradient(to right, #818cf8, #c084fc);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--primary);
+  font-family: var(--font-plus-jakarta), sans-serif;
 }
 
 .nav-link {
@@ -79,41 +81,41 @@ body {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  color: var(--muted-foreground);
+  color: #6c757d;
   text-decoration: none;
   border-radius: var(--radius);
   transition: all 0.2s;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 0.875rem;
 }
 
 .nav-link:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
+  background: #f8f9fa;
+  color: var(--primary);
 }
 
 .nav-link.active {
-  background: rgba(99, 102, 241, 0.1);
+  background: rgba(4, 119, 191, 0.08);
   color: var(--primary);
 }
 
 .main-content {
   padding: 2.5rem;
   overflow-y: auto;
-  background: radial-gradient(circle at top left, rgba(99, 102, 241, 0.03), transparent 40%);
+  background: #f8f9fa;
 }
 
 /* UI Elements */
 .glass {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: #ffffff;
   border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .card {
   padding: 1.5rem;
   border-radius: var(--radius);
-  background: var(--card);
+  background: #ffffff;
   border: 1px solid var(--border);
 }
 
@@ -122,59 +124,60 @@ body {
   color: white;
   padding: 0.75rem 1.5rem;
   border-radius: var(--radius);
-  font-weight: 600;
+  font-weight: 700;
   border: none;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 4px 12px rgba(4, 119, 191, 0.2);
+  font-family: var(--font-plus-jakarta), sans-serif;
 }
 
 .btn-primary:hover {
-  opacity: 0.9;
+  opacity: 0.95;
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 6px 16px rgba(4, 119, 191, 0.3);
 }
 
 .badge {
   padding: 0.25rem 0.75rem;
   border-radius: 1rem;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
 }
 
 .badge-success {
   background: rgba(34, 197, 94, 0.1);
-  color: #4ade80;
+  color: #22c55e;
 }
 
 /* Form Styles */
 .input-field {
   width: 100%;
   padding: 0.75rem 1rem;
-  background: var(--input);
-  border: 1px solid var(--border);
+  background: #ffffff;
+  border: 1px solid #dee2e6;
   border-radius: var(--radius);
-  color: white;
+  color: var(--foreground);
   outline: none;
   transition: all 0.2s;
 }
 
 .input-field:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 0 0 3px rgba(4, 119, 191, 0.1);
 }
 
 .table-row:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: #f8f9fa;
 }
 
 .category-card {
-  transition: all 0.2s;
+  transition: all 0.3s ease;
 }
 
 .category-card:hover {
   transform: translateY(-4px);
   border-color: var(--primary);
-  box-shadow: 0 12px 24px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 12px 30px rgba(4, 119, 191, 0.1);
 }

@@ -35,22 +35,22 @@ export default async function Home() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem' }}>
         <div className="card glass">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-            <div style={{ padding: '0.5rem', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '0.5rem', color: 'var(--primary)' }}>
+            <div style={{ padding: '0.5rem', background: 'rgba(4, 119, 191, 0.1)', borderRadius: '0.5rem', color: 'var(--primary)' }}>
               <Package size={20} />
             </div>
             <span className="badge badge-success">+2 esta semana</span>
           </div>
-          <h3 style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--muted-foreground)', marginBottom: '0.25rem' }}>Productos Totales</h3>
+          <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: '0.25rem' }}>Productos Totales</h3>
           <p style={{ fontSize: '2rem', fontWeight: 800 }}>{stats.products}</p>
         </div>
 
         <div className="card glass">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-            <div style={{ padding: '0.5rem', background: 'rgba(192, 132, 252, 0.1)', borderRadius: '0.5rem', color: '#c084fc' }}>
+            <div style={{ padding: '0.5rem', background: 'rgba(242, 135, 5, 0.1)', borderRadius: '0.5rem', color: 'var(--secondary)' }}>
               <TrendingUp size={20} />
             </div>
           </div>
-          <h3 style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--muted-foreground)', marginBottom: '0.25rem' }}>Visitas SEO</h3>
+          <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: '0.25rem' }}>Visitas SEO</h3>
           <p style={{ fontSize: '2rem', fontWeight: 800 }}>{stats.views.toLocaleString()}</p>
         </div>
 
