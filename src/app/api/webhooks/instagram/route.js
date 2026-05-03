@@ -26,6 +26,12 @@ export async function POST(req) {
   try {
     const body = await req.json();
 
+    // Loguear el evento completo para depuración en el panel
+    await query(
+      "INSERT INTO webhook_logs (event_type, payload) VALUES ($1, $2)",
+      [body.object || 'unknown', JSON.stringify(body)]
+    );
+
     if (body.object === "instagram") {
       for (const entry of body.entry) {
         // --- 1. PROCESAR MENSAJES (DMs) ---

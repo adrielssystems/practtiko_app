@@ -1,7 +1,7 @@
 import { query } from "@/lib/db";
 export const dynamic = "force-dynamic";
 import Link from "next/link";
-import { MessageSquare, MessageCircle, Clock, User, ChevronRight, Settings } from "lucide-react";
+import { MessageSquare, MessageCircle, Clock, User, ChevronRight, Settings, Activity } from "lucide-react";
 
 async function getConversations() {
   try {
@@ -43,10 +43,14 @@ export default async function InstagramMonitoringPage() {
             Supervisa las conversaciones en tiempo real entre tus clientes y el Agente Virtual de Practiiko.
           </p>
         </div>
-        <Link href="/instagram/config" className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-          <Settings size={18} />
-          Configurar IA
-        </Link>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <Link href="/instagram/logs" className="btn secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+            <Activity size={16} /> Ver Consola de Logs
+          </Link>
+          <Link href="/instagram/config" className="btn secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+            <Settings size={16} /> Configurar IA
+          </Link>
+        </div>
       </header>
 
       <div className="grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
