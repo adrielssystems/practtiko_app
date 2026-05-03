@@ -8,6 +8,10 @@ const EVO_KEY = process.env.EVOLUTION_API_KEY;
 const EVO_INSTANCE = process.env.EVOLUTION_INSTANCE || "Practiiko";
 
 async function sendWhatsAppMessage(to, text) {
+  if (!EVO_URL) {
+    console.error("[EVOLUTION ERROR]: EVOLUTION_API_URL no está configurada en Easypanel.");
+    return;
+  }
   try {
     const response = await fetch(`${EVO_URL}/message/sendText/${EVO_INSTANCE}`, {
       method: 'POST',

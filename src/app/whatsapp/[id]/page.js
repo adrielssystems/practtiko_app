@@ -26,7 +26,7 @@ async function getCustomerInfo(id) {
 }
 
 export default async function WhatsAppChatPage({ params }) {
-  const { id } = params;
+  const { id } = await params; // En Next.js 15+ params es una promesa
   const messages = await getChatMessages(id);
   const customer = await getCustomerInfo(id);
 
