@@ -40,7 +40,7 @@ export default function LoginPage() {
     <div className="login-container">
       <div className="login-card glass">
           <div className="login-header">
-            <img src="/logo.png" alt="Practiiko Logo" style={{ height: '240px', width: 'auto', marginBottom: '0.5rem', objectFit: 'contain' }} />
+            <img src="/logo.png" alt="Practiiko Logo" style={{ height: '240px', width: 'auto', marginTop: '-2.5rem', marginBottom: '-1.5rem', objectFit: 'contain' }} />
             <p style={{ marginTop: '0', fontWeight: '600', letterSpacing: '0.025em' }}>Panel de Autogestión</p>
           </div>
         
