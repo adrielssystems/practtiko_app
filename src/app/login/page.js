@@ -80,5 +80,6 @@ export default function LoginPage() {
           <p>© {new Date().getFullYear()} Practiiko. Todos los derechos reservados.</p>
         </div>
       </div>
+    </div>
   );
 }
