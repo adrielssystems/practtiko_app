@@ -18,13 +18,14 @@ async function checkInstagramConnection() {
 
   try {
     console.log(`[DEBUG] Probando conexión con token (largo: ${token.length}, inicio: ${token.substring(0, 10)}...)`);
-    const res = await fetch(`https://graph.facebook.com/v21.0/me?access_token=${token}`);
+    // Usamos graph.instagram.com ya que el token empieza por IGAA
+    const res = await fetch(`https://graph.instagram.com/v21.0/me?fields=id,username&access_token=${token}`);
     const data = await res.json();
     if (data.error) {
       console.error("[DEBUG] Error de Meta:", data.error);
       return { status: 'error', message: data.error.message };
     }
-    return { status: 'success', name: data.name, id: data.id };
+    return { status: 'success', name: data.username, id: data.id };
   } catch (e) {
     return { status: 'error', message: 'Error de red al conectar con Meta.' };
   }
