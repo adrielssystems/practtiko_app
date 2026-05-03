@@ -11,9 +11,10 @@ async function getProducts() {
       LEFT JOIN categories c ON p.category_id = c.id 
       ORDER BY p.created_at DESC
     `);
+    console.log(`[DIAGNOSTICO] Productos encontrados en DB: ${res.rows.length}`);
     return res.rows;
   } catch (e) {
-    console.error("Error fetching products:", e);
+    console.error("[ERROR DIAGNOSTICO] Error al consultar productos:", e);
     return [];
   }
 }
