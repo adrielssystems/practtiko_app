@@ -8,14 +8,7 @@ import { DynamicTool } from "@langchain/core/tools";
 import { query } from "@/lib/db";
 import { HumanMessage, AIMessage } from "@langchain/core/messages";
 
-const model = new ChatOpenAI({
-  openAIApiKey: process.env.DEEPSEEK_API_KEY,
-  configuration: {
-    baseURL: process.env.DEEPSEEK_API_URL || "https://api.deepseek.com",
-  },
-  modelName: "deepseek-chat",
-  temperature: 0.3,
-});
+// La inicialización del modelo se movió dentro de la función para evitar errores en build
 
 const productsTool = new DynamicTool({
   name: "consultar_productos",
@@ -87,6 +80,15 @@ export async function processChatMessage(message, sessionId) {
     ["human", "{input}"],
     new MessagesPlaceholder("agent_scratchpad"),
   ]);
+
+  const model = new ChatOpenAI({
+    openAIApiKey: process.env.DEEPSEEK_API_KEY || "dummy_key_for_build",
+    configuration: {
+      baseURL: process.env.DEEPSEEK_API_URL || "https://api.deepseek.com",
+    },
+    modelName: "deepseek-chat",
+    temperature: 0.3,
+  });
 
   const agent = await createOpenAIFunctionsAgent({
     llm: model,
