@@ -32,7 +32,7 @@ export default function LayoutShell({ children }) {
     <div className="dashboard-layout">
       <aside className="sidebar">
         <div className="sidebar-logo">
-          Practiiko
+          <span>Pract</span><span style={{ color: 'var(--primary)' }}>ii</span><span>ko</span>
         </div>
         
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>

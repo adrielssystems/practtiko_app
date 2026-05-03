@@ -40,7 +40,7 @@ export default function LoginPage() {
     <div className="login-container">
       <div className="login-card glass">
         <div className="login-header">
-          <h1>Practiiko</h1>
+          <h1><span>Pract</span><span style={{ color: 'var(--primary)' }}>ii</span><span>ko</span></h1>
           <p>Panel de Autogestión</p>
         </div>
         
@@ -110,7 +110,7 @@ export default function LoginPage() {
           font-size: 2.5rem;
           font-weight: 800;
           letter-spacing: -0.05em;
-          color: var(--primary);
+          color: var(--secondary);
         }
         
         .login-header p {
