@@ -103,8 +103,8 @@ export async function POST(req) {
               );
 
               processChatMessage(userMessage, senderId, 'comment', commentId, username || 'Cliente').then(aiResponse => {
-                // 1. Respuesta pública corta
-                replyToInstagramComment(commentId, "Gracias por escribirnos, info al DM 💎");
+                // 1. Respuesta pública corta con guía de solicitudes
+                replyToInstagramComment(commentId, "¡Hola! Te enviamos el detalle al DM (revisa tu bandeja de solicitudes/otros) 💎");
                 
                 // 2. Respuesta privada con el detalle de la IA
                 sendInstagramPrivateReply(commentId, aiResponse);
