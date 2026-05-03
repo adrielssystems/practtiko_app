@@ -2,6 +2,7 @@ import { query } from "@/lib/db";
 export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { MessageSquare, MessageCircle, Clock, User, ChevronRight, Settings, Activity } from "lucide-react";
+import BotSimulator from "@/components/Instagram/BotSimulator";
 
 async function getConversations() {
   try {
@@ -101,6 +102,8 @@ export default async function InstagramMonitoringPage() {
           ))
         )}
       </div>
+
+      <BotSimulator />
     </div>
   );
 }
