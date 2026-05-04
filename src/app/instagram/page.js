@@ -17,6 +17,7 @@ async function getConversations() {
         MAX(created_at) as last_message,
         COUNT(*) as total_messages,
         (SELECT full_name FROM instagram_customers WHERE id = session_id LIMIT 1) as full_name,
+        (SELECT ai_enabled FROM instagram_customers WHERE id = session_id LIMIT 1) as ai_enabled,
         (SELECT source FROM instagram_messages m2 WHERE m2.session_id = instagram_messages.session_id ORDER BY created_at DESC LIMIT 1) as latest_source
       FROM instagram_messages
       WHERE session_id != 'practiiko'
@@ -107,6 +108,7 @@ export default async function InstagramMonitoringPage() {
 
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem', flexShrink: 0 }}>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <BotPauseToggle id={conv.session_id} platform="instagram" initialStatus={conv.ai_enabled ?? true} />
                       <DeleteChatButton sessionId={conv.session_id} />
                       <div style={{ 
                         background: 'rgba(4, 119, 191, 0.1)', 

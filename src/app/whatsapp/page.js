@@ -14,6 +14,7 @@ async function getConversations() {
         MAX(created_at) as last_message,
         COUNT(*) as total_messages,
         (SELECT full_name FROM whatsapp_customers WHERE id = session_id LIMIT 1) as push_name,
+        (SELECT ai_enabled FROM whatsapp_customers WHERE id = session_id LIMIT 1) as ai_enabled,
         (
           SELECT (message::json->>'content')
           FROM whatsapp_messages wm2
@@ -126,6 +127,7 @@ export default async function WhatsAppPage() {
 
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem', flexShrink: 0 }}>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <BotPauseToggle id={conv.session_id} platform="whatsapp" initialStatus={conv.ai_enabled ?? true} />
                       <DeleteChatButton sessionId={conv.session_id} />
                       <div style={{ 
                         background: 'rgba(37, 211, 102, 0.1)', 
