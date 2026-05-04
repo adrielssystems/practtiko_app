@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { processChatMessage } from "@/lib/ai/agent";
 
+export const dynamic = "force-dynamic";
+
 // Configuración de Evolution API desde variables de entorno
 const EVO_URL = process.env.EVOLUTION_API_URL;
 const EVO_KEY = process.env.EVOLUTION_API_KEY;

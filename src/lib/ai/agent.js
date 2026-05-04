@@ -2,12 +2,18 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { query } from "@/lib/db";
 
-const model = new ChatGoogleGenerativeAI({
-  apiKey: process.env.GOOGLE_API_KEY || "dummy_key_for_build",
-  modelName: "gemini-1.5-flash",
-  maxOutputTokens: 512,
-  temperature: 0,
-});
+let _model;
+function getModel() {
+  if (!_model) {
+    _model = new ChatGoogleGenerativeAI({
+      apiKey: process.env.GOOGLE_API_KEY || "dummy_key_for_build",
+      modelName: "gemini-1.5-flash",
+      maxOutputTokens: 512,
+      temperature: 0,
+    });
+  }
+  return _model;
+}
 
 /**
  * NORMALIZADOR
@@ -139,6 +145,7 @@ FALLBACK: ${inventory.isFallback ? "TRUE" : "FALSE"}
 `;
 
   try {
+    const model = getModel();
     const response = await model.invoke([
       new SystemMessage(prompt),
       new HumanMessage(message)
