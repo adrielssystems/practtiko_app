@@ -1,103 +1,116 @@
 import { ChatOpenAI } from "@langchain/openai";
-import { AgentExecutor, createToolCallingAgent } from "langchain/agents";
-import { DynamicStructuredTool } from "@langchain/core/tools";
-import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts";
-import { AIMessage, HumanMessage } from "@langchain/core/messages";
-import { z } from "zod";
+import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { query } from "../db.js";
 
-// Herramienta de consulta de productos MEJORADA
-const productsTool = new DynamicStructuredTool({
-  name: "consultar_inventario_practiiko",
-  description: "OBLIGATORIA. Úsala para CUALQUIER pregunta sobre productos, modelos, precios, colchones o sofás. Si no la usas, no puedes responder.",
-  schema: z.object({
-    termino: z.string().describe("Palabra clave para buscar (ej: 'colchon', 'sofa', 'mama', 'D006')"),
-  }),
-  func: async function({ termino }) {
-    console.log(`[STRICT DB SEARCH] Buscando: ${termino}`);
-    try {
-      let t = termino.trim().toLowerCase();
-      // Limpieza básica para errores comunes (clochon -> colchon)
-      if (t.includes('clochon')) t = t.replace('clochon', 'colchon');
-      if (t.includes('soffa')) t = t.replace('soffa', 'sofa');
-      
-      let clean = t;
-      if (clean.endsWith('es')) clean = clean.slice(0, -2);
-      else if (clean.endsWith('s')) clean = clean.slice(0, -1);
-
-      const res = await query(
-        `SELECT p.name, p.description, p.code, p.price_bcv, p.price_cash, c.name as categoria
-         FROM products p
-         LEFT JOIN categories c ON p.category_id = c.id
-         WHERE (p.name ILIKE $1 OR p.description ILIKE $1 OR p.code ILIKE $1 OR c.name ILIKE $1 OR p.name ILIKE $2 OR c.name ILIKE $2)
-         AND p.status = 'active' LIMIT 10`,
-        [`%${t}%`, `%${clean}%`]
-      );
-
-      if (res.rows.length === 0) {
-        return "ERROR CRÍTICO: No existe NADA con ese nombre en la base de datos real. Dile al cliente que no tienes ese modelo exacto disponible por ahora.";
-      }
-      return JSON.stringify(res.rows);
-    } catch (e) {
-      return "Error de conexión con inventario.";
-    }
-  },
+const model = new ChatOpenAI({
+  openAIApiKey: process.env.DEEPSEEK_API_KEY,
+  configuration: { baseURL: process.env.DEEPSEEK_API_URL || "https://api.deepseek.com" },
+  modelName: "deepseek-chat",
+  temperature: 0,
 });
 
-const tools = [productsTool];
+/**
+ * PASO 1: EXTRAER TÉRMINO DE BÚSQUEDA
+ */
+async function getSearchTerm(message, history) {
+  const prompt = `Extrae el término de búsqueda (modelo, código o tipo de mueble) del mensaje del cliente. 
+  Si no hay una intención de búsqueda clara, responde "NONE".
+  Mensaje: "${message}"
+  Respuesta (Solo el término o NONE):`;
+  
+  const res = await model.invoke([new HumanMessage(prompt)]);
+  const term = res.content.trim().toUpperCase();
+  return term === "NONE" ? null : term;
+}
 
-const SYSTEM_MESSAGE = `
-IDENTIDAD: Eres el Agente Virtual de Practiiko 💎. Tu única misión es informar sobre el inventario REAL.
+/**
+ * PASO 2: CONSULTAR DB (DETERMINÍSTICO)
+ */
+async function searchInventory(term) {
+  if (!term) return { found: false, products: [] };
+  
+  let t = term.toLowerCase();
+  if (t.includes('clochon')) t = t.replace('clochon', 'colchon');
+  if (t.includes('soffa')) t = t.replace('soffa', 'sofa');
+  
+  let clean = t;
+  if (clean.endsWith('es')) clean = clean.slice(0, -2);
+  else if (clean.endsWith('s')) clean = clean.slice(0, -1);
 
-REGLA DE ORO: NO CONOCES NINGÚN MODELO DE MEMORIA. 
-Para responder sobre sofás, colchones o precios, DEBES usar 'consultar_inventario_practiiko' SIEMPRE.
-Si la herramienta no devuelve resultados, NO INVENTES NOMBRES NI PRECIOS. Di que no tienes ese modelo disponible.
+  try {
+    const res = await query(
+      `SELECT p.name, p.description, p.code, p.price_bcv, p.price_cash, c.name as categoria
+       FROM products p
+       LEFT JOIN categories c ON p.category_id = c.id
+       WHERE (p.name ILIKE $1 OR p.description ILIKE $1 OR p.code ILIKE $1 OR c.name ILIKE $1 OR p.name ILIKE $2 OR c.name ILIKE $2)
+       AND p.status = 'active' LIMIT 5`,
+      [`%${t}%`, `%${clean}%`]
+    );
+    
+    return {
+      found: res.rows.length > 0,
+      products: res.rows
+    };
+  } catch (e) {
+    console.error("[DB ERROR]", e);
+    return { error: true, products: [] };
+  }
+}
 
-PAUTAS DE RESPUESTA:
-- Brevedad extrema (máximo 2 párrafos).
-- No narres que vas a buscar, solo da la respuesta.
-- Si el cliente es de Margarita: Da precios BCV y Cash (el cash es el más bajo).
-- Si el cliente es Nacional: NO DES PRECIOS. Envíalo a WhatsApp: 0424-8948664.
-- Apoyo visual: www.bit.ly/CatalogoPractiiko (Prohibido enviar fotos).
+/**
+ * PASO 3: GENERAR RESPUESTA FINAL
+ */
+const SYSTEM_PROMPT = `
+IDENTIDAD: Eres el Agente Virtual de Practiiko 💎. Solo informas sobre el inventario REAL.
 
-DATO CLAVE: Los códigos reales son como D001, D006, etc. Verifica siempre qué producto es cada código en la base de datos antes de hablar.
+REGLAS DE ORO (INCUMPPLIBLES):
+1. SOLO puedes hablar de los productos que se te entregan en la sección "INVENTARIO ACTUAL".
+2. Si "INVENTARIO ACTUAL" está vacío o no coincide con lo que pide el cliente, responde: "Actualmente no ubico ese modelo exacto en mi inventario, pero te invito a ver nuestro catálogo completo: www.bit.ly/CatalogoPractiiko".
+3. PROHIBIDO INVENTAR: No inventes nombres, códigos (D001, etc) ni precios.
+4. BREVEDAD: Máximo 2 párrafos.
+5. PRECIOS: Si el cliente es de Margarita, da el precio BCV y el precio CASH (más bajo). Si es Nacional, NO des precios, envíalo a WhatsApp: 0424-8948664.
+6. UBICACIÓN: Tienda física en C.C. Terranova Plaza, Local A-14, Porlamar.
+
+INVENTARIO ACTUAL:
+{inventory_data}
+
+INFO CLIENTE:
+Nombre: {customer_name}
+Plataforma: {platform}
 `;
 
 export async function processChatMessage(message, sessionId, source = 'dm', commentId = null, customerName = 'Cliente') {
   try {
+    // 1. Sanitizar historial (Solo mensajes del usuario para evitar auto-contaminación)
     const tableName = source === 'whatsapp' ? 'whatsapp_messages' : 'instagram_messages';
     const historyRes = await query(
-      `SELECT message FROM ${tableName} WHERE session_id = $1 ORDER BY created_at DESC LIMIT 6`,
+      `SELECT message FROM ${tableName} WHERE session_id = $1 AND (message::json->>'role') = 'user' ORDER BY created_at DESC LIMIT 3`,
       [sessionId]
     );
-    const chatHistory = historyRes.rows.map(r => typeof r.message === 'string' ? JSON.parse(r.message) : r.message).map(msg => msg.role === 'user' ? new HumanMessage(msg.content) : new AIMessage(msg.content)).reverse();
+    const userHistory = historyRes.rows.map(r => (typeof r.message === 'string' ? JSON.parse(r.message) : r.message).content).join(" | ");
 
-    const model = new ChatOpenAI({
-      openAIApiKey: process.env.DEEPSEEK_API_KEY,
-      configuration: { baseURL: process.env.DEEPSEEK_API_URL || "https://api.deepseek.com" },
-      modelName: "deepseek-chat",
-      temperature: 0, // Cero creatividad para evitar alucinaciones
-    });
+    // 2. Extraer intención y Buscar en DB
+    const term = await getSearchTerm(message, userHistory);
+    const dbResult = await searchInventory(term);
 
-    const prompt = ChatPromptTemplate.fromMessages([
-      ["system", SYSTEM_MESSAGE],
-      new MessagesPlaceholder("chat_history"),
-      ["human", "{input}"],
-      new MessagesPlaceholder("agent_scratchpad"),
+    // 3. Generar respuesta con el LLM como formateador
+    const inventoryString = dbResult.found 
+      ? JSON.stringify(dbResult.products, null, 2)
+      : "NO HAY PRODUCTOS ENCONTRADOS.";
+
+    const finalPrompt = SYSTEM_PROMPT
+      .replace("{inventory_data}", inventoryString)
+      .replace("{customer_name}", customerName)
+      .replace("{platform}", source.toUpperCase());
+
+    const response = await model.invoke([
+      new SystemMessage(finalPrompt),
+      new HumanMessage(message)
     ]);
 
-    const agent = createToolCallingAgent({ llm: model, tools, prompt });
-    const executor = new AgentExecutor({ agent, tools });
+    const aiResponse = response.content;
 
-    const result = await executor.invoke({
-      input: message,
-      chat_history: chatHistory,
-    });
-
-    const aiResponse = result.output;
-
-    // Guardado de mensajes
-    const dbTable = source === 'whatsapp' ? 'whatsapp_messages' : 'instagram_messages';
+    // 4. Guardar respuesta
     if (source === 'whatsapp') {
       await query(`INSERT INTO whatsapp_messages (session_id, message) VALUES ($1, $2)`, [sessionId, JSON.stringify({ role: 'assistant', content: aiResponse })]);
     } else {
@@ -105,8 +118,9 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
     }
 
     return aiResponse;
+
   } catch (error) {
-    console.error("[AGENT FATAL ERROR]:", error);
-    return "Lo siento, tuve un problema al consultar mi inventario. ¿Podrías repetir tu pregunta? 💎";
+    console.error("[PIPELINE FATAL ERROR]:", error);
+    return "Hola! Un gusto saludarte. Tenemos los mejores sofás y colchones importados para ti. ¿Qué modelo buscas? Puedes ver nuestro catálogo aquí: www.bit.ly/CatalogoPractiiko 💎";
   }
 }
