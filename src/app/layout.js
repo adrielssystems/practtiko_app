@@ -6,11 +6,13 @@ import LayoutShell from "@/components/LayoutShell";
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta",
   subsets: ["latin"],
+  display: 'swap',
 });
 
 const workSans = Work_Sans({
   variable: "--font-work-sans",
   subsets: ["latin"],
+  display: 'swap',
 });
 
 export const metadata = {

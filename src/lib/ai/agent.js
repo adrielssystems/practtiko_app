@@ -13,12 +13,16 @@ const model = new ChatOpenAI({
  * 1. DETECTA INTENCIÓN POR REGLAS (Prioridad: Ventas > Cortesía)
  */
 function detectIntent(message) {
-  const m = message.toLowerCase();
+  const m = message.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Quitar acentos
+
   if (m.includes("gracias") || m.includes("ok") || m.includes("dale") || m.includes("perfecto") || m.includes("entendido")) return "OTHER";
   if (m.includes("precio") || m.includes("costo") || m.includes("cuanto") || m.includes("envio")) return "PRICE_INFO";
   if (m.includes("catalogo") || m.includes("que tiene") || m.includes("ver todo") || m.includes("disponibl")) return "CATALOG";
   if (m.includes("colchon") || m.includes("sofa") || m.includes("cama") || m.includes("mueble") || m.match(/[a-z]\d{3}/)) return "PRODUCT_QUERY";
+  if (m.includes("margarita") || m.includes("isla") || m.includes("porlamar") || m.includes("pampatar") || m.includes("juan griego")) return "LOCATION_UPDATE";
   if (m.includes("hola") || m.includes("buen") || m.includes("saludo")) return "GREETING";
+  
   return "OTHER";
 }
 
@@ -26,7 +30,8 @@ function detectIntent(message) {
  * 2. EXTRAE KEYWORD DINÁMICAMENTE (Soporta SKUs dinámicos)
  */
 function extractKeywordRuleBased(message) {
-  const m = message.toLowerCase();
+  const m = message.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Quitar acentos
   
   const codeMatch = m.match(/[a-z]\d{3}/);
   if (codeMatch) return codeMatch[0];
@@ -159,6 +164,12 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
       return aiResponse;
     }
 
+    // 🛑 GESTIÓN DE UBICACIÓN: Si el usuario dice que es de Margarita, forzamos catálogo para mostrar precios
+    let currentIntent = intent;
+    if (intent === "LOCATION_UPDATE") {
+      currentIntent = "CATALOG"; 
+    }
+
     // Sanitizar historial
     const tableName = source === 'whatsapp' ? 'whatsapp_messages' : 'instagram_messages';
     const historyRes = await query(
@@ -170,10 +181,11 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
     // Pipeline Determinístico
     const term = extractKeywordRuleBased(message);
     const location = detectLocation(message, userHistory);
-    const inventory = await getInventoryData(term, intent, location);
+    const inventory = await getInventoryData(term, currentIntent, location);
 
     console.log({
-      intent,
+      intent: currentIntent,
+      originalIntent: intent,
       term,
       location,
       found: inventory.found,
