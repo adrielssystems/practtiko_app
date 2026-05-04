@@ -13,11 +13,18 @@ async function getConversations() {
         session_id, 
         MAX(created_at) as last_message,
         COUNT(*) as total_messages,
-        (SELECT full_name FROM whatsapp_customers WHERE id = session_id LIMIT 1) as push_name
+        (SELECT full_name FROM whatsapp_customers WHERE id = session_id LIMIT 1) as push_name,
+        (
+          SELECT (message::json->>'content')
+          FROM whatsapp_messages wm2
+          WHERE wm2.session_id = whatsapp_messages.session_id
+          ORDER BY wm2.created_at DESC
+          LIMIT 1
+        ) as last_text
       FROM whatsapp_messages
       GROUP BY session_id
       ORDER BY last_message DESC
-      LIMIT 20
+      LIMIT 50
     `);
     return res.rows;
   } catch (e) {
@@ -92,11 +99,28 @@ export default async function WhatsAppPage() {
                       </h4>
                       <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem' }}>
                         <Clock size={12} /> {new Date(conv.last_message).toLocaleString('es-VE', { 
-                          timeZone: 'America/Caracas', 
+                          timeZone: 'America/Caracas',
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
                           hour: '2-digit', 
                           minute: '2-digit' 
                         })}
                       </div>
+                      {conv.last_text && (
+                        <div style={{ 
+                          fontSize: '0.72rem', 
+                          color: 'var(--muted-foreground)', 
+                          marginTop: '0.15rem',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          maxWidth: '160px',
+                          opacity: 0.8
+                        }}>
+                          {conv.last_text}
+                        </div>
+                      )}
                     </div>
                   </div>
 
