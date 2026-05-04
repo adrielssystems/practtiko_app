@@ -133,7 +133,7 @@ async function getInventory(term, intent, location) {
 }
 
 /**
- * RESPUESTA FINAL (LLM CON GEMINI)
+ * RESPUESTA FINAL (LLM con Deepseek)
  */
 async function buildResponse(message, customerName, inventory, location, history) {
   const isMargarita = location === "MARGARITA";
@@ -149,6 +149,7 @@ REGLAS MILITARES DE BREVEDAD:
 5. NO INVENTARIO: Si el producto no está en la lista de abajo, di: "Ese modelo no está disponible ahora, ¿le interesa ver nuestros Sofá Cama?" (Y nada más).
 6. CIUDAD: No pidas la ciudad si ya está en el historial.
 7. CATÁLOGO: PROHIBIDO enviar el link del catálogo a menos que el cliente lo pida expresamente.
+8. HORARIOS Y TIENDA: SOLO dar esta info si el cliente la pide o si confirma estar en Margarita y quiere visitar. Local A-14, CC Terranova Plaza. Lun-Vie: 8:30 AM-4:30 PM. Sáb: 9:00 AM-1:00 PM. Maps: https://maps.google.com/?q=X49X%2BXF+Porlamar
 
 INVENTARIO (Usa solo lo necesario):
 ${inventory.text}
