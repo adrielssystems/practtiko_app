@@ -70,6 +70,7 @@ export default async function WhatsAppPage() {
                 background: 'white',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
                 border: '1px solid #f0f0f0',
+                position: 'relative'
               }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '1rem', alignItems: 'flex-start' }}>
                   <Link href={`/whatsapp/${conv.session_id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '1rem', overflow: 'hidden' }}>
@@ -104,37 +105,32 @@ export default async function WhatsAppPage() {
                     </div>
                   </Link>
 
-                  {/* BOTONES EN ESQUINA ABSOLUTA */}
                   <div 
                     style={{ 
-                      position: 'absolute',
-                      top: '1rem',
-                      right: '1rem',
                       display: 'flex', 
                       gap: '0.5rem', 
                       alignItems: 'center',
-                      zIndex: 9999,
-                      pointerEvents: 'auto'
+                      position: 'relative',
+                      zIndex: 10
                     }}
                   >
                     <BotPauseToggle id={conv.session_id} platform="whatsapp" initialStatus={conv.ai_enabled ?? true} />
                     <DeleteChatButton sessionId={conv.session_id} platform="whatsapp" />
                   </div>
+                </div>
 
-                  {/* INFO DE MENSAJES Y PLATAFORMA */}
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem', marginTop: 'auto' }}>
-                    <div style={{ 
-                      background: 'rgba(37, 211, 102, 0.1)', 
-                      color: '#128C7E', 
-                      padding: '0.2rem 0.5rem', 
-                      borderRadius: '6px', 
-                      fontSize: '0.65rem', 
-                      fontWeight: 800
-                    }}>
-                      {conv.total_messages} MSG
-                    </div>
-                    <span style={{ fontSize: '0.6rem', background: '#25D366', color: 'white', padding: '2px 8px', borderRadius: '6px', fontWeight: 800, textTransform: 'uppercase' }}>WhatsApp</span>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.4rem', marginTop: 'auto' }}>
+                  <div style={{ 
+                    background: 'rgba(37, 211, 102, 0.1)', 
+                    color: '#128C7E', 
+                    padding: '0.2rem 0.5rem', 
+                    borderRadius: '6px', 
+                    fontSize: '0.65rem', 
+                    fontWeight: 800
+                  }}>
+                    {conv.total_messages} MSG
                   </div>
+                  <span style={{ fontSize: '0.6rem', background: '#25D366', color: 'white', padding: '2px 8px', borderRadius: '6px', fontWeight: 800, textTransform: 'uppercase' }}>WhatsApp</span>
                 </div>
                 
                 <Link href={`/whatsapp/${conv.session_id}`} style={{ 
