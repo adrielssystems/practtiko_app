@@ -111,13 +111,7 @@ export async function POST(req) {
       processChatMessage(userMessage, senderNumber, 'whatsapp', null, pushName).then(async (aiResponse) => {
         // Enviar a WhatsApp
         await sendWhatsAppMessage(senderNumber, aiResponse);
-        
-        // Guardar SOLO la respuesta del bot (el del usuario ya se guardó arriba)
-        await query(
-          `INSERT INTO whatsapp_messages (session_id, message) VALUES ($1, $2)`,
-          [senderNumber, JSON.stringify({ role: 'assistant', content: aiResponse })]
-        );
-        console.log(`[WHATSAPP] Respuesta de IA guardada para ${senderNumber}`);
+        console.log(`[WHATSAPP] Respuesta de IA enviada a ${senderNumber}`);
       }).catch(e => console.error("[ERROR WHATSAPP AI]:", e));
     }
 

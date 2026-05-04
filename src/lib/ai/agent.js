@@ -223,7 +223,21 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
     return response;
 
   } catch (error) {
-    console.error(error);
-    return "Error consultando inventario 💎";
+    console.error("CRITICAL AGENT ERROR:", error);
+    const errorMsg = "Error consultando inventario 💎";
+    
+    // Intentar guardar el error en la DB para que el admin lo vea
+    try {
+      const table = source === 'whatsapp' ? 'whatsapp_messages' : 'instagram_messages';
+      if (source === 'whatsapp') {
+        await query(`INSERT INTO whatsapp_messages (session_id, message) VALUES ($1, $2)`, [sessionId, JSON.stringify({ role: 'assistant', content: errorMsg })]);
+      } else {
+        await query(`INSERT INTO instagram_messages (session_id, message, source, comment_id) VALUES ($1, $2, $3, $4)`, [sessionId, JSON.stringify({ role: 'assistant', content: errorMsg }), source, commentId]);
+      }
+    } catch (dbErr) {
+      console.error("Failed to log error to DB:", dbErr);
+    }
+    
+    return errorMsg;
   }
 }
