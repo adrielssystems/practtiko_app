@@ -14,21 +14,44 @@ const productsTool = new DynamicStructuredTool({
     query: z.string().describe("Palabra clave o modelo (ej: 'Mama', 'Burbuja', 'Sofa', 'Sofa cama', 'Colchon')"),
   }),
   func: async function({ query: searchTerm }) {
-    console.log(`[DB QUERY] Buscando en catálogo: ${searchTerm}`);
+    console.log(`[DB AUDIT QUERY] Buscando: ${searchTerm}`);
     try {
-      // Limpiar el término de búsqueda para mejorar coincidencias (ej: Colchones -> Colchon)
       let cleanSearch = searchTerm.trim().toLowerCase();
       if (cleanSearch.endsWith('es')) cleanSearch = cleanSearch.slice(0, -2);
       else if (cleanSearch.endsWith('s')) cleanSearch = cleanSearch.slice(0, -1);
 
+      // Búsqueda profunda: Nombre, Descripción, Código o Nombre de Categoría
       const res = await query(
-        "SELECT name, description, price_bcv, price_cash, status FROM products WHERE (name ILIKE $1 OR description ILIKE $1 OR name ILIKE $2 OR description ILIKE $2) AND status = 'active' LIMIT 8",
+        `SELECT 
+          p.name, 
+          p.description, 
+          p.code,
+          p.price_bcv, 
+          p.price_cash, 
+          c.name as categoria
+         FROM products p
+         LEFT JOIN categories c ON p.category_id = c.id
+         WHERE (
+           p.name ILIKE $1 OR 
+           p.description ILIKE $1 OR 
+           p.code ILIKE $1 OR 
+           c.name ILIKE $1 OR
+           p.name ILIKE $2 OR 
+           p.description ILIKE $2 OR 
+           c.name ILIKE $2
+         ) AND p.status = 'active' 
+         LIMIT 10`,
         [`%${searchTerm}%`, `%${cleanSearch}%`]
       );
+
+      if (res.rows.length === 0) {
+        return "RESULTADO: No se encontraron productos ni categorías con ese nombre en el inventario real de Practiiko. Por favor, informa al cliente que no ubicas ese modelo exacto y ofrécele ver el catálogo general: www.bit.ly/CatalogoPractiiko. NO INVENTES MODELOS.";
+      }
+
       return JSON.stringify(res.rows);
     } catch (e) {
-      console.error("[DB ERROR]", e);
-      return "Error al consultar el catálogo.";
+      console.error("[DB AUDIT ERROR]", e);
+      return "Error técnico al consultar el catálogo real.";
     }
   },
 });
