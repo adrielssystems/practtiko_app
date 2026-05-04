@@ -1,0 +1,106 @@
+"use client";
+
+import { useState } from "react";
+import { Save, ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import MediaUpload from "./MediaUpload";
+
+export default function ProductForm({ categories, onSubmitAction }) {
+  const [media, setMedia] = useState({ images: [], video: null });
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleMediaChange = (newMedia) => {
+    setMedia(newMedia);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSaving(true);
+
+    const formData = new FormData(e.target);
+    
+    // Añadimos los datos de medios al FormData
+    formData.append("images", JSON.stringify(media.images));
+    formData.append("video_url", media.video || "");
+
+    try {
+      await onSubmitAction(formData);
+    } catch (error) {
+      console.error("Error saving product:", error);
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="card glass" style={{ padding: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+        <div className="form-group">
+          <label className="label">Nombre del Producto</label>
+          <input name="name" type="text" required className="input-field" placeholder="Ej: Sofá Modular Premium" />
+        </div>
+        <div className="form-group">
+          <label className="label">Código (SKU)</label>
+          <input name="code" type="text" required className="input-field" placeholder="Ej: SOFA-001" />
+        </div>
+      </div>
+
+      <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+        <label className="label">Descripción</label>
+        <textarea name="description" className="input-field" style={{ minHeight: '100px', resize: 'vertical' }} placeholder="Detalles del producto..."></textarea>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+        <div className="form-group">
+          <label className="label">Precio BCV ($)</label>
+          <input name="price_bcv" type="number" step="0.01" required className="input-field" placeholder="0.00" />
+        </div>
+        <div className="form-group">
+          <label className="label">Precio Divisas ($)</label>
+          <input name="price_cash" type="number" step="0.01" required className="input-field" placeholder="0.00" />
+        </div>
+        <div className="form-group">
+          <label className="label">Stock Inicial</label>
+          <input name="stock" type="number" required className="input-field" placeholder="0" />
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+        <div className="form-group">
+          <label className="label">Categoría</label>
+          <select name="category_id" className="input-field" required>
+            <option value="">Seleccionar categoría</option>
+            {categories.map(cat => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+          </select>
+        </div>
+        <div className="form-group">
+          <label className="label">Estado</label>
+          <select name="status" className="input-field">
+            <option value="active">Activo</option>
+            <option value="draft">Borrador</option>
+          </select>
+        </div>
+      </div>
+
+      {/* COMPONENTE DE MEDIOS */}
+      <div style={{ marginBottom: '2rem', padding: '1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '16px', border: '1px solid var(--border)' }}>
+        <MediaUpload onMediaChange={handleMediaChange} />
+      </div>
+
+      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
+        <Link href="/products" className="btn-outline">Cancelar</Link>
+        <button type="submit" disabled={isSaving} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {isSaving ? (
+            "Guardando..."
+          ) : (
+            <>
+              <Save size={18} />
+              Guardar Producto
+            </>
+          )}
+        </button>
+      </div>
+    </form>
+  );
+}

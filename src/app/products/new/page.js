@@ -3,7 +3,8 @@ export const dynamic = "force-dynamic";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, Package, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import ProductForm from "@/components/Products/ProductForm";
 
 async function getCategories() {
     try {
@@ -29,13 +30,37 @@ export default async function NewProductPage() {
         const stock = parseInt(formData.get("stock") || 0);
         const category_id = formData.get("category_id");
         const status = formData.get("status");
+        
+        // Datos de medios
+        const images = JSON.parse(formData.get("images") || "[]");
+        const video_url = formData.get("video_url") || null;
 
-        await query(`
-            INSERT INTO products (name, code, description, price_bcv, price_cash, stock, category_id, status)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        `, [name, code, description, price_bcv, price_cash, stock, category_id, status]);
+        try {
+            // 1. Insertar producto base
+            const productRes = await query(`
+                INSERT INTO products (name, code, description, price_bcv, price_cash, stock, category_id, status, video_url)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                RETURNING id
+            `, [name, code, description, price_bcv, price_cash, stock, category_id, status, video_url]);
 
-        revalidatePath("/products");
+            const productId = productRes.rows[0].id;
+
+            // 2. Insertar imágenes relacionadas
+            if (images.length > 0) {
+                for (let i = 0; i < images.length; i++) {
+                    await query(`
+                        INSERT INTO product_images (product_id, url, is_main, sort_order)
+                        VALUES ($1, $2, $3, $4)
+                    `, [productId, images[i], i === 0, i]);
+                }
+            }
+
+            revalidatePath("/products");
+        } catch (e) {
+            console.error("Error creating product with media:", e);
+            throw e;
+        }
+
         redirect("/products");
     }
 
@@ -49,65 +74,7 @@ export default async function NewProductPage() {
                 <h1 style={{ fontSize: '2.25rem', fontWeight: 800 }}>Nuevo Producto</h1>
             </header>
 
-            <form action={createProduct} className="card glass" style={{ padding: '2rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
-                    <div className="form-group">
-                        <label className="label">Nombre del Producto</label>
-                        <input name="name" type="text" required className="input-field" placeholder="Ej: Sofá Modular Premium" />
-                    </div>
-                    <div className="form-group">
-                        <label className="label">Código (SKU)</label>
-                        <input name="code" type="text" required className="input-field" placeholder="Ej: SOFA-001" />
-                    </div>
-                </div>
-
-                <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                    <label className="label">Descripción</label>
-                    <textarea name="description" className="input-field" style={{ minHeight: '100px', resize: 'vertical' }} placeholder="Detalles del producto..."></textarea>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
-                    <div className="form-group">
-                        <label className="label">Precio BCV ($)</label>
-                        <input name="price_bcv" type="number" step="0.01" required className="input-field" placeholder="0.00" />
-                    </div>
-                    <div className="form-group">
-                        <label className="label">Precio Divisas ($)</label>
-                        <input name="price_cash" type="number" step="0.01" required className="input-field" placeholder="0.00" />
-                    </div>
-                    <div className="form-group">
-                        <label className="label">Stock Inicial</label>
-                        <input name="stock" type="number" required className="input-field" placeholder="0" />
-                    </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-                    <div className="form-group">
-                        <label className="label">Categoría</label>
-                        <select name="category_id" className="input-field">
-                            <option value="">Seleccionar categoría</option>
-                            {categories.map(cat => (
-                                <option key={cat.id} value={cat.id}>{cat.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="form-group">
-                        <label className="label">Estado</label>
-                        <select name="status" className="input-field">
-                            <option value="active">Activo</option>
-                            <option value="draft">Borrador</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
-                    <Link href="/products" className="btn-outline">Cancelar</Link>
-                    <button type="submit" className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Save size={18} />
-                        Guardar Producto
-                    </button>
-                </div>
-            </form>
+            <ProductForm categories={categories} onSubmitAction={createProduct} />
         </div>
     );
 }
