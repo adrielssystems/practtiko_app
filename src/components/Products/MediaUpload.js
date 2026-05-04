@@ -4,9 +4,9 @@ import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { Image as ImageIcon, Video, X, Upload, Plus, Film } from "lucide-react";
 
-export default function MediaUpload({ onMediaChange }) {
-  const [images, setImages] = useState([]);
-  const [video, setVideo] = useState(null);
+export default function MediaUpload({ onMediaChange, initialMedia = { images: [], video: null } }) {
+  const [images, setImages] = useState(initialMedia.images || []);
+  const [video, setVideo] = useState(initialMedia.video || null);
   const [isUploading, setIsUploading] = useState(false);
 
   const onDrop = useCallback(async (acceptedFiles) => {
