@@ -1,25 +1,25 @@
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { query } from "@/lib/db";
 
 let _model;
 function getModel() {
-  const apiKey = process.env.GOOGLE_API_KEY;
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  const baseUrl = process.env.DEEPSEEK_API_URL || "https://api.deepseek.com";
   
   if (!apiKey || apiKey === "") {
-    // Durante el build de Next.js, no queremos que truene
     if (process.env.NODE_ENV === 'production') {
-      console.warn("⚠️ Advertencia: GOOGLE_API_KEY no detectada. Usando modo estático.");
+      console.warn("⚠️ Advertencia: DEEPSEEK_API_KEY no detectada.");
     }
     return null; 
   }
 
   if (!_model) {
-    _model = new ChatGoogleGenerativeAI({
-      apiKey: apiKey,
-      modelName: "gemini-1.5-flash",
-      maxOutputTokens: 512,
-      temperature: 0.1, // Un poco más de creatividad para evitar lo robótico
+    _model = new ChatOpenAI({
+      openAIApiKey: apiKey,
+      configuration: { baseURL: baseUrl },
+      modelName: "deepseek-chat",
+      temperature: 0.1,
     });
   }
   return _model;
@@ -164,7 +164,7 @@ FALLBACK: ${inventory.isFallback ? "TRUE" : "FALSE"}
     ]);
     return response.content;
   } catch (error) {
-    console.error("DEBUG - Gemini Error:", error.message);
+    console.error("DEBUG - DeepSeek Error:", error.message);
     // Fallback manual si falla la API (Muy importante para no dejar al cliente mudo)
     const locationText = isMargarita ? "\n🚚 Envío gratis en Margarita." : "\n📦 Envíos nacionales: 0424-8948664.";
     const list = inventory.text || "Visita nuestro catálogo para ver modelos y precios.";
