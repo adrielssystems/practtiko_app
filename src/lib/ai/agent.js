@@ -69,6 +69,9 @@ INSTRUCCIONES CRÍTICAS:
    - NIVEL 5: 25% inicial + 9 cuotas (Mín. $450).
    - NIVEL 6: 20% inicial + 12 cuotas (Mín. $600).
    - CIERRE: Usa esta promo para incentivar la compra inmediata como el regalo perfecto para mamá. 🎁💖
+11. PRECIOS Y PAGOS: 
+   - Ofrece SIEMPRE el precio en Dólares (Tasa BCV) como primera opción.
+   - Menciona después que también aceptamos pagos en Dólares Efectivo, Zelle o Binance (opciones con beneficios adicionales).
 
 CATÁLOGO: www.bit.ly/CatalogoPractiiko
 VIDEOLLAMADA/WHATSAPP: https://wa.me/584248948664
