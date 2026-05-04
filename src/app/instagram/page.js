@@ -15,7 +15,7 @@ async function getConversations() {
       SELECT 
         session_id, 
         MAX(created_at) as last_message,
-        to_char(MAX(created_at) AT TIME ZONE 'UTC' AT TIME ZONE 'America/Caracas', 'DD/MM/YYYY, HH12:MI AM') as last_message_fmt,
+        to_char(MAX(created_at) AT TIME ZONE 'America/Caracas', 'DD/MM/YYYY, HH12:MI AM') as last_message_fmt,
         COUNT(*) as total_messages,
         (SELECT full_name FROM instagram_customers WHERE id = session_id LIMIT 1) as full_name,
         (SELECT ai_enabled FROM instagram_customers WHERE id = session_id LIMIT 1) as ai_enabled,

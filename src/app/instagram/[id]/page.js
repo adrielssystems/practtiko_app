@@ -9,7 +9,7 @@ import ManualReplyInput from "@/components/Common/ManualReplyInput";
 async function getChatHistory(sessionId) {
   try {
     const res = await query(`
-      SELECT *, to_char(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Caracas', 'HH12:MI AM') as time_fmt 
+      SELECT *, to_char(created_at AT TIME ZONE 'America/Caracas', 'HH12:MI AM') as time_fmt 
       FROM instagram_messages 
       WHERE session_id = $1 
       ORDER BY created_at ASC
