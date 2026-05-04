@@ -1,57 +1,45 @@
 import { ChatOpenAI } from "@langchain/openai";
-import { AgentExecutor, createOpenAIFunctionsAgent } from "langchain/agents";
+import { AgentExecutor, createToolCallingAgent } from "langchain/agents";
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts";
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
 import { z } from "zod";
 import { query } from "../db.js";
 
-// Herramienta de consulta de productos
+// Herramienta de consulta de productos MEJORADA
 const productsTool = new DynamicStructuredTool({
-  name: "consultar_productos",
-  description: "ÚNICA FUENTE DE VERDAD SOBRE EL INVENTARIO Y PRECIOS. Úsala siempre que el cliente pregunte por modelos, sofás, sofás cama, colchones o costos. Devuelve nombres, descripciones, precios BCV ($) y precios Divisas ($).",
+  name: "consultar_inventario_practiiko",
+  description: "OBLIGATORIA. Úsala para CUALQUIER pregunta sobre productos, modelos, precios, colchones o sofás. Si no la usas, no puedes responder.",
   schema: z.object({
-    query: z.string().describe("Palabra clave o modelo (ej: 'Mama', 'Burbuja', 'Sofa', 'Sofa cama', 'Colchon')"),
+    termino: z.string().describe("Palabra clave para buscar (ej: 'colchon', 'sofa', 'mama', 'D006')"),
   }),
-  func: async function({ query: searchTerm }) {
-    console.log(`[DB AUDIT QUERY] Buscando: ${searchTerm}`);
+  func: async function({ termino }) {
+    console.log(`[STRICT DB SEARCH] Buscando: ${termino}`);
     try {
-      let cleanSearch = searchTerm.trim().toLowerCase();
-      if (cleanSearch.endsWith('es')) cleanSearch = cleanSearch.slice(0, -2);
-      else if (cleanSearch.endsWith('s')) cleanSearch = cleanSearch.slice(0, -1);
+      let t = termino.trim().toLowerCase();
+      // Limpieza básica para errores comunes (clochon -> colchon)
+      if (t.includes('clochon')) t = t.replace('clochon', 'colchon');
+      if (t.includes('soffa')) t = t.replace('soffa', 'sofa');
+      
+      let clean = t;
+      if (clean.endsWith('es')) clean = clean.slice(0, -2);
+      else if (clean.endsWith('s')) clean = clean.slice(0, -1);
 
-      // Búsqueda profunda: Nombre, Descripción, Código o Nombre de Categoría
       const res = await query(
-        `SELECT 
-          p.name, 
-          p.description, 
-          p.code,
-          p.price_bcv, 
-          p.price_cash, 
-          c.name as categoria
+        `SELECT p.name, p.description, p.code, p.price_bcv, p.price_cash, c.name as categoria
          FROM products p
          LEFT JOIN categories c ON p.category_id = c.id
-         WHERE (
-           p.name ILIKE $1 OR 
-           p.description ILIKE $1 OR 
-           p.code ILIKE $1 OR 
-           c.name ILIKE $1 OR
-           p.name ILIKE $2 OR 
-           p.description ILIKE $2 OR 
-           c.name ILIKE $2
-         ) AND p.status = 'active' 
-         LIMIT 10`,
-        [`%${searchTerm}%`, `%${cleanSearch}%`]
+         WHERE (p.name ILIKE $1 OR p.description ILIKE $1 OR p.code ILIKE $1 OR c.name ILIKE $1 OR p.name ILIKE $2 OR c.name ILIKE $2)
+         AND p.status = 'active' LIMIT 10`,
+        [`%${t}%`, `%${clean}%`]
       );
 
       if (res.rows.length === 0) {
-        return "RESULTADO: No se encontraron productos ni categorías con ese nombre en el inventario real de Practiiko. Por favor, informa al cliente que no ubicas ese modelo exacto y ofrécele ver el catálogo general: www.bit.ly/CatalogoPractiiko. NO INVENTES MODELOS.";
+        return "ERROR CRÍTICO: No existe NADA con ese nombre en la base de datos real. Dile al cliente que no tienes ese modelo exacto disponible por ahora.";
       }
-
       return JSON.stringify(res.rows);
     } catch (e) {
-      console.error("[DB AUDIT ERROR]", e);
-      return "Error técnico al consultar el catálogo real.";
+      return "Error de conexión con inventario.";
     }
   },
 });
@@ -59,76 +47,36 @@ const productsTool = new DynamicStructuredTool({
 const tools = [productsTool];
 
 const SYSTEM_MESSAGE = `
-IDENTIDAD:
-Eres el Agente Virtual de Practiiko 💎, un asesor de ventas experto en muebles de alta calidad. Habla en español venezolano, con un tono profesional, experto y persuasivo. Evita ser excesivamente familiar, pero mantén la cordialidad.
-FECHA ACTUAL: {now}
-PLATAFORMA: {platform}
-CLIENTE: {customer_name}
+IDENTIDAD: Eres el Agente Virtual de Practiiko 💎. Tu única misión es informar sobre el inventario REAL.
 
-ADN DE PRACTIIKO (úsalo para convencer):
-- Vendemos productos IMPORTADOS de alta calidad: sofás, sofás cama y colchones.
-- Tecnología exclusiva "Sofa-in-a-box": el mueble llega comprimido al vacío y al abrirlo recupera su forma completa. 🪄
-- 5 AÑOS DE GARANTÍA en todos nuestros productos.
-- Tienda FÍSICA en Margarita (C.C. Terranova Plaza, Local A-14, Av. Terranova, Porlamar).
-- Horario: Lun-Vie 8:30 AM - 4:30 PM | Sáb 9:00 AM - 1:00 PM.
+REGLA DE ORO: NO CONOCES NINGÚN MODELO DE MEMORIA. 
+Para responder sobre sofás, colchones o precios, DEBES usar 'consultar_inventario_practiiko' SIEMPRE.
+Si la herramienta no devuelve resultados, NO INVENTES NOMBRES NI PRECIOS. Di que no tienes ese modelo disponible.
 
-GUÍA DE VENTA (BREVEDAD INTELIGENTE):
-1. BREVEDAD: Responde en máximo 2 o 3 párrafos cortos. Evita introducciones largas o frases de relleno excesivas. Ve al punto.
-2. DESCUBRIMIENTO: Si piden algo genérico, usa 'consultar_productos' para mostrar opciones. Describe beneficios (cómodo, estilo moderno).
-3. MODELOS: Si mencionan "Mamá", busca el sofá "Abrazo de Mamá".
-4. CATÁLOGO (ÚNICO APOYO VISUAL): Dirige siempre a www.bit.ly/CatalogoPractiiko. PROHIBIDO enviar o prometer fotos, imágenes o capturas individuales por el chat. Indica que todas las fotos reales están en el catálogo.
+PAUTAS DE RESPUESTA:
+- Brevedad extrema (máximo 2 párrafos).
+- No narres que vas a buscar, solo da la respuesta.
+- Si el cliente es de Margarita: Da precios BCV y Cash (el cash es el más bajo).
+- Si el cliente es Nacional: NO DES PRECIOS. Envíalo a WhatsApp: 0424-8948664.
+- Apoyo visual: www.bit.ly/CatalogoPractiiko (Prohibido enviar fotos).
 
-REGLAS DE PRECIOS Y UBICACIÓN:
-1. NO preguntes la ubicación en el saludo inicial. Ayuda con los modelos primero.
-2. Pregunta si es de MARGARITA o Nacional SOLO cuando pregunten por PRECIOS, COSTOS o ENVÍOS.
-3. SI ES DE MARGARITA:
-   - Da precios reales y resalta el ENVÍO GRATIS en la isla. 🎁
-   - Invítalo a la tienda física en Porlamar.
-4. SI ES DE OTRO ESTADO (Nacional):
-   - NO des precios. Lleva siempre a WhatsApp: https://wa.me/584248948664 (0424-8948664).
-   - Indica que un asesor humano cotizará el envío por Tealca.
-   - Resalta que el formato "Sofa-in-a-box" hace el envío nacional muy económico.
-
-PROTOCOLO DE VERDAD ABSOLUTA (DB):
-1. ANTES de responder sobre cualquier sofá, colchón, precio o característica, DEBES usar la herramienta 'consultar_productos'.
-2. PROHIBIDO NARRAR LA BÚSQUEDA: No digas "Un momento", "Déjame consultar" o "Buscando en la base de datos". El cliente no debe saber que estás usando una herramienta. Solo da la respuesta final.
-3. Si el cliente menciona un código (ej. D001, D006), úsalo como término de búsqueda exacto en la herramienta.
-4. Si el cliente pide algo por "puestos" (ej. "de dos puestos"), busca "sofa" o "dos asientos" en la herramienta para ver qué hay disponible realmente.
-5. PROHIBIDO hablar de memoria. La base de datos manda. Si la DB dice "Individual", el mueble es para 1 persona, sin importar lo que tú creas.
-6. Si no encuentras resultados en la DB, dile al cliente: "No ubico ese modelo exacto en mi inventario actual, pero tengo estos otros disponibles..." y muestra lo que sí encontraste.
-
-GUÍA DE MODELOS (Solo como referencia para búsquedas):
-- 2 Puestos: Busca "dos asientos" o "Caterpilar", "Merey", "Nube".
-- Individual: Busca "individual" o "Abrazo de Mama", "Burbuja".
-- 3 Puestos: Busca "tres asientos" o "Tofu", "Lemmy", "Tumbona".
-- Sofá Cama: Busca "sofa cama".
-
-MÉTODOS DE PAGO (Solo Margarita):
-- Ofrece primero el precio BCV ($ a tasa oficial para bolívares) y luego el precio CASH ($ efectivo/zelle/cripto) que es más bajo.
-  Ejemplo: "$XXX (tasa BCV) o $YYY si pagas en efectivo o Zelle 💎"
-- CASHEA disponible hasta el 10/05/2026. 🎁
-
-RECUERDA: Tu número oficial es 0424-8948664. Tu única fuente de verdad es la herramienta 'consultar_productos'.
+DATO CLAVE: Los códigos reales son como D001, D006, etc. Verifica siempre qué producto es cada código en la base de datos antes de hablar.
 `;
 
 export async function processChatMessage(message, sessionId, source = 'dm', commentId = null, customerName = 'Cliente') {
   try {
-    // 1. Obtener historial reciente de la tabla correspondiente
     const tableName = source === 'whatsapp' ? 'whatsapp_messages' : 'instagram_messages';
     const historyRes = await query(
       `SELECT message FROM ${tableName} WHERE session_id = $1 ORDER BY created_at DESC LIMIT 6`,
       [sessionId]
     );
-    
     const chatHistory = historyRes.rows.map(r => typeof r.message === 'string' ? JSON.parse(r.message) : r.message).map(msg => msg.role === 'user' ? new HumanMessage(msg.content) : new AIMessage(msg.content)).reverse();
 
     const model = new ChatOpenAI({
-      openAIApiKey: process.env.DEEPSEEK_API_KEY || "dummy_key_for_build",
-      configuration: {
-        baseURL: process.env.DEEPSEEK_API_URL || "https://api.deepseek.com",
-      },
+      openAIApiKey: process.env.DEEPSEEK_API_KEY,
+      configuration: { baseURL: process.env.DEEPSEEK_API_URL || "https://api.deepseek.com" },
       modelName: "deepseek-chat",
-      temperature: 0.1,
+      temperature: 0, // Cero creatividad para evitar alucinaciones
     });
 
     const prompt = ChatPromptTemplate.fromMessages([
@@ -138,46 +86,27 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
       new MessagesPlaceholder("agent_scratchpad"),
     ]);
 
-    const agent = await createOpenAIFunctionsAgent({
-      llm: model,
-      tools,
-      prompt,
-    });
-
-    const executor = new AgentExecutor({
-      agent,
-      tools,
-    });
+    const agent = createToolCallingAgent({ llm: model, tools, prompt });
+    const executor = new AgentExecutor({ agent, tools });
 
     const result = await executor.invoke({
       input: message,
       chat_history: chatHistory,
-      now: new Date().toLocaleString('es-VE', { timeZone: 'America/Caracas' }),
-      customer_name: customerName,
-      platform: source === 'whatsapp' ? 'WHATSAPP' : 'INSTAGRAM'
     });
 
     const aiResponse = result.output;
 
-    // 2. Guardar en la tabla correspondiente
-    if (source !== 'whatsapp' || sessionId.startsWith('simul')) {
-      const dbTable = source === 'whatsapp' ? 'whatsapp_messages' : 'instagram_messages';
-      if (source === 'whatsapp') {
-        await query(
-          `INSERT INTO whatsapp_messages (session_id, message) VALUES ($1, $2), ($1, $3)`,
-          [sessionId, JSON.stringify({ role: 'user', content: message }), JSON.stringify({ role: 'assistant', content: aiResponse })]
-        );
-      } else {
-        await query(
-          `INSERT INTO instagram_messages (session_id, message, source, comment_id) VALUES ($1, $2, $3, $4), ($1, $5, $3, $4)`,
-          [sessionId, JSON.stringify({ role: 'user', content: message }), source, commentId, JSON.stringify({ role: 'assistant', content: aiResponse })]
-        );
-      }
+    // Guardado de mensajes
+    const dbTable = source === 'whatsapp' ? 'whatsapp_messages' : 'instagram_messages';
+    if (source === 'whatsapp') {
+      await query(`INSERT INTO whatsapp_messages (session_id, message) VALUES ($1, $2)`, [sessionId, JSON.stringify({ role: 'assistant', content: aiResponse })]);
+    } else {
+      await query(`INSERT INTO instagram_messages (session_id, message, source, comment_id) VALUES ($1, $2, $3, $4)`, [sessionId, JSON.stringify({ role: 'assistant', content: aiResponse }), source, commentId]);
     }
 
     return aiResponse;
   } catch (error) {
-    console.error("[AGENT ERROR]:", error);
-    return "Lo siento, tuve un problema técnico. ¿Podría repetirme su consulta? 💎";
+    console.error("[AGENT FATAL ERROR]:", error);
+    return "Lo siento, tuve un problema al consultar mi inventario. ¿Podrías repetir tu pregunta? 💎";
   }
 }
