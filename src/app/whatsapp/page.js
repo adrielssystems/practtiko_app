@@ -4,6 +4,7 @@ import Link from "next/link";
 import { MessageSquare, Clock, User, ChevronRight, Settings, Activity, Trash2, Smartphone } from "lucide-react";
 import DeleteChatButton from "@/components/Instagram/DeleteChatButton"; // Reutilizamos el botón de borrar
 import AutoRefresh from "@/components/Common/AutoRefresh";
+import BotPauseToggle from "@/components/Common/BotPauseToggle";
 
 async function getConversations() {
   try {
@@ -12,7 +13,8 @@ async function getConversations() {
         session_id, 
         MAX(created_at) as last_message,
         COUNT(*) as total_messages,
-        (SELECT full_name FROM whatsapp_customers WHERE id = session_id LIMIT 1) as push_name
+        (SELECT full_name FROM whatsapp_customers WHERE id = session_id LIMIT 1) as push_name,
+        (SELECT ai_enabled FROM whatsapp_customers WHERE id = session_id LIMIT 1) as ai_enabled
       FROM whatsapp_messages
       GROUP BY session_id
       ORDER BY last_message DESC

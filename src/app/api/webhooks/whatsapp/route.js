@@ -75,7 +75,16 @@ export async function POST(req) {
         [senderNumber, pushName]
       );
 
-      // 4. Procesar con IA y responder (en segundo plano para no bloquear el webhook)
+      // 4. Verificar si el bot está pausado para este cliente
+      const customerRes = await query("SELECT ai_enabled FROM whatsapp_customers WHERE id = $1", [senderNumber]);
+      const isAiEnabled = customerRes.rows[0]?.ai_enabled ?? true;
+
+      if (!isAiEnabled) {
+        console.log(`[WHATSAPP] Bot pausado para ${senderNumber}. No se generará respuesta automática.`);
+        return NextResponse.json({ status: "bot_paused" });
+      }
+
+      // 5. Procesar con IA y responder (en segundo plano)
       console.log(`[WHATSAPP] Procesando mensaje para ${senderNumber}...`);
       processChatMessage(userMessage, senderNumber, 'whatsapp', null, pushName).then(async (aiResponse) => {
         // Enviar a WhatsApp

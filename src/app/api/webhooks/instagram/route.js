@@ -66,7 +66,16 @@ export async function POST(req) {
                 );
               }
 
-              // Procesar en segundo plano para no bloquear a Meta
+              // 1. Verificar si el bot está pausado para este cliente
+              const customerRes = await query("SELECT ai_enabled FROM instagram_customers WHERE id = $1", [senderId]);
+              const isAiEnabled = customerRes.rows[0]?.ai_enabled ?? true;
+
+              if (!isAiEnabled) {
+                console.log(`[INSTAGRAM DM] Bot pausado para ${senderId}. No se generará respuesta automática.`);
+                return; // Detener aquí
+              }
+
+              // 2. Procesar con IA si está habilitado
               processChatMessage(userMessage, senderId, 'dm', null, userInfo?.name || userInfo?.username || 'Cliente').then(aiResponse => {
                 sendInstagramMessage(senderId, aiResponse);
               }).catch(e => console.error("[ERROR ASYNC DM]:", e));
@@ -101,6 +110,15 @@ export async function POST(req) {
                  ON CONFLICT (id) DO UPDATE SET username = $2, full_name = $3, last_seen = NOW()`,
                 [senderId, username, username]
               );
+
+              // Verificar pausa del bot
+              const customerRes = await query("SELECT ai_enabled FROM instagram_customers WHERE id = $1", [senderId]);
+              const isAiEnabled = customerRes.rows[0]?.ai_enabled ?? true;
+
+              if (!isAiEnabled) {
+                console.log(`[INSTAGRAM COMMENT] Bot pausado para ${senderId}. No se generará respuesta automática.`);
+                return;
+              }
 
               processChatMessage(userMessage, senderId, 'comment', commentId, username || 'Cliente').then(aiResponse => {
                 // 1. Respuesta pública corta con guía de solicitudes
