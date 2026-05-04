@@ -71,10 +71,9 @@ export default async function InstagramMonitoringPage() {
                 background: 'white',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
                 border: '1px solid #f0f0f0',
-                position: 'relative'
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <Link href={`/instagram/${conv.session_id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, overflow: 'hidden' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '1rem', alignItems: 'flex-start' }}>
+                  <Link href={`/instagram/${conv.session_id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '1rem', overflow: 'hidden' }}>
                     <div style={{ 
                       width: '48px', 
                       height: '48px', 
@@ -106,20 +105,33 @@ export default async function InstagramMonitoringPage() {
                     </div>
                   </Link>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem', flexShrink: 0 }}>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <BotPauseToggle id={conv.session_id} platform="instagram" initialStatus={conv.ai_enabled ?? true} />
-                      <DeleteChatButton sessionId={conv.session_id} />
-                      <div style={{ 
-                        background: 'rgba(4, 119, 191, 0.1)', 
-                        color: 'var(--primary)', 
-                        padding: '0.25rem 0.6rem', 
-                        borderRadius: '8px', 
-                        fontSize: '0.7rem', 
-                        fontWeight: 800
-                      }}>
-                        {conv.total_messages} MSG
-                      </div>
+                  {/* BOTONES EN ESQUINA ABSOLUTA */}
+                  <div 
+                    style={{ 
+                      position: 'absolute',
+                      top: '1rem',
+                      right: '1rem',
+                      display: 'flex', 
+                      gap: '0.5rem', 
+                      alignItems: 'center',
+                      zIndex: 9999,
+                      pointerEvents: 'auto'
+                    }}
+                  >
+                    <BotPauseToggle id={conv.session_id} platform="instagram" initialStatus={conv.ai_enabled ?? true} />
+                    <DeleteChatButton sessionId={conv.session_id} platform="instagram" />
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem', marginTop: 'auto' }}>
+                    <div style={{ 
+                      background: 'rgba(4, 119, 191, 0.1)', 
+                      color: 'var(--primary)', 
+                      padding: '0.25rem 0.6rem', 
+                      borderRadius: '8px', 
+                      fontSize: '0.7rem', 
+                      fontWeight: 800
+                    }}>
+                      {conv.total_messages} MSG
                     </div>
                     {conv.latest_source === 'comment' && (
                       <span style={{ fontSize: '0.6rem', background: '#F28705', color: 'white', padding: '2px 8px', borderRadius: '6px', fontWeight: 800, textTransform: 'uppercase' }}>Comentario</span>
