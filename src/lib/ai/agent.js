@@ -79,15 +79,21 @@ function detectLocation(message, history) {
 async function getInventory(term, intent, location) {
   try {
     let rows = [];
+    let categories = [];
     let isFallback = false;
 
+    // 1. Traer categorías activas para el saludo
+    const catRes = await query("SELECT name FROM categories ORDER BY name ASC");
+    categories = catRes.rows.map(c => c.name);
+
     const baseQuery = `
-      SELECT p.name, p.code, p.price_bcv, p.price_cash, c.name as categoria
+      SELECT p.name, p.code, p.price_bcv, p.price_cash, p.description, c.name as categoria
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       WHERE p.status = 'active'
     `;
 
+    // 2. Lógica de búsqueda de productos
     if (intent === "CATALOG") {
       const res = await query(baseQuery + " LIMIT 5");
       rows = res.rows;
@@ -98,10 +104,8 @@ async function getInventory(term, intent, location) {
         baseQuery + ` AND (p.name ILIKE $1 OR p.code ILIKE $1 OR c.name ILIKE $1) LIMIT 5`,
         [`%${term}%`]
       );
-
       rows = res.rows;
 
-      // fallback
       if (rows.length === 0) {
         const res2 = await query(baseQuery + " LIMIT 5");
         rows = res2.rows;
@@ -109,23 +113,26 @@ async function getInventory(term, intent, location) {
       }
     }
 
-    if (rows.length === 0) {
-      return { found: false };
-    }
+    console.log(`[DB DEBUG] Categorías: ${categories.join(", ")} | Productos: ${rows.length}`);
 
-    const text = rows.map(p => {
+    // 3. Formatear el texto para la IA
+    const productsText = rows.map(p => {
       return `💎 PRODUCTO: ${p.name}
 - Código: ${p.code}
-- Categoría: ${p.category}
+- Categoría: ${p.categoria}
 - Descripción: ${p.description || "N/A"}
 - Precio BCV: $${p.price_bcv || 'Consultar'}
 - Precio ESPECIAL (Divisas/Zelle): $${p.price_cash || 'Consultar'}
 - Envío: ${location === "MARGARITA" ? "Gratis" : "TEALCA (Cobro Destino)"} 💎`;
     }).join("\n\n");
 
-    console.log(`[DB DEBUG] Productos encontrados para "${term}": ${rows.length}`);
+    const categoriesText = categories.length > 0 ? `CATEGORÍAS DISPONIBLES: ${categories.join(", ")}` : "";
 
-    return { found: rows.length > 0, text, isFallback };
+    return { 
+      found: rows.length > 0 || categories.length > 0, 
+      text: `${categoriesText}\n\n${productsText}`, 
+      isFallback 
+    };
   } catch (e) {
     console.error("[DB ERROR]:", e);
     return { found: false, text: "", isFallback: false };
