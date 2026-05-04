@@ -95,13 +95,13 @@ async function getInventory(term, intent, location) {
 
     // 2. Lógica de búsqueda de productos
     if (intent === "CATALOG") {
-      const res = await query(baseQuery + " LIMIT 5");
+      const res = await query(baseQuery + " LIMIT 15");
       rows = res.rows;
     }
 
     if (term) {
       const res = await query(
-        baseQuery + ` AND (p.name ILIKE $1 OR p.code ILIKE $1 OR c.name ILIKE $1) LIMIT 5`,
+        baseQuery + ` AND (p.name ILIKE $1 OR p.code ILIKE $1 OR c.name ILIKE $1) LIMIT 15`,
         [`%${term}%`]
       );
       rows = res.rows;
@@ -128,10 +128,10 @@ async function getInventory(term, intent, location) {
 
     const categoriesText = categories.length > 0 ? `CATEGORÍAS DISPONIBLES: ${categories.join(", ")}` : "";
 
-    return { 
-      found: rows.length > 0 || categories.length > 0, 
-      text: `${categoriesText}\n\n${productsText}`, 
-      isFallback 
+    return {
+      found: rows.length > 0 || categories.length > 0,
+      text: `${categoriesText}\n\n${productsText}`,
+      isFallback
     };
   } catch (e) {
     console.error("[DB ERROR]:", e);
@@ -152,14 +152,19 @@ REGLAS MILITARES DE BREVEDAD:
 1. CERO RELLENO: Prohibido usar frases como "Gracias por...", "Un placer...", "Agradezco su...", "Entiendo que...". Ve directo al grano.
 2. MÁXIMO 20 PALABRAS: Si tu respuesta tiene más de 20 palabras, está mal.
 3. ESTRUCTURA: [Respuesta directa] + [Pregunta corta].
-4. PRECIOS: Solo si tienes CIUDAD. Si no, di: "Indíqueme su ciudad para darle el precio exacto".
+4. PRECIOS: Solo si tienes CIUDAD. 
+   - SI ESTÁ EN MARGARITA: Da el "Precio BCV" y dile como gancho: "Si paga en divisas, efectivo o Zelle, el precio le queda en solo [Precio Cash]".
+   - SI NO ES MARGARITA: No des precios todavía, pide su ciudad para calcular logística de envío.
 5. NO INVENTARIO: Si el producto no está en la lista de abajo, di: "Ese modelo no está disponible ahora, ¿le interesa ver nuestros Sofá Cama?" (Y nada más).
 6. CIUDAD: No pidas la ciudad si ya está en el historial.
-7. CATÁLOGO: PROHIBIDO enviar el link del catálogo a menos que el cliente lo pida expresamente.
+7. CATÁLOGO: PROHIBIDO enviar el link del catálogo a menos que el cliente lo pida expresamente. Si lo pide, usa este: www.bit.ly/CatalogoPractiiko
 8. GREETING: Si el cliente solo saluda ("hola"), responde: "¡Hola! Un gusto. Tenemos colchones, sofás y sofás cama en varios modelos y colores. ¿Cuál le interesa?". NO pidas ciudad todavía.
 9. HORARIOS Y TIENDA: SOLO dar esta info si el cliente la pide o si confirma estar en Margarita y quiere visitar. Local A-14, CC Terranova Plaza. Lun-Vie: 8:30 AM-4:30 PM. Sáb: 9:00 AM-1:00 PM. Maps: https://maps.google.com/?q=X49X%2BXF+Porlamar
-
 10. PERSONALIZACIÓN: Usa el nombre del cliente (si no es "Cliente" o "Explorador") para saludar o responder de forma más personal.
+11. CAMPAÑAS: Si el mensaje es solo una palabra clave (ej: "mama"), asume que viene de un post. Y enviale el catalogo, usa este: www.bit.ly/CatalogoPractiiko.
+12. PRECISIÓN TÉCNICA: No confundas "Sofá" con "Sofá Cama". Si el cliente pide uno y solo tenemos el otro, aclara que nuestros modelos son Sofá Cama (multifuncionales).
+13. TAMAÑOS: Menciona siempre si el producto es Individual, Matrimonial, Queen o de 2/3 asientos según la descripción. Es un dato crítico para el cliente.
+14. CASHEA: Aceptamos Cashea (Precio BCV). Promo Mamá (hasta 10/05): Inicial desde 20% y hasta 12 cuotas. Niveles 3-4 (min $200): 25-30% inicial, 6 cuotas. Nivel 5 (min $450): 25% inicial, 9 cuotas. Nivel 6 (min $600): 20% inicial, 12 cuotas. Sé muy breve.
 
 INVENTARIO (Usa solo lo necesario):
 ${inventory.text}
