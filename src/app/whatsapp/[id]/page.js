@@ -106,11 +106,15 @@ export default async function WhatsAppChatPage({ params }) {
                   gap: '0.3rem'
                 }}>
                   <Clock size={10} />
-                  {new Date(m.created_at).toLocaleTimeString('es-VE', { 
-                    hour: '2-digit', 
-                    minute: '2-digit',
-                    timeZone: 'America/Caracas'
-                  })}
+                  {(() => {
+                    const d = new Date(m.created_at);
+                    return d.toLocaleTimeString('es-VE', { 
+                      hour: '2-digit', 
+                      minute: '2-digit',
+                      timeZone: 'America/Caracas',
+                      hour12: true
+                    });
+                  })()}
                 </div>
                 {isBot && (
                   <div style={{ 

@@ -101,7 +101,18 @@ export default async function InstagramMonitoringPage() {
                         {conv.full_name || (conv.session_id.startsWith('test-') || conv.session_id.startsWith('simul') ? conv.session_id : `Cliente: ${conv.session_id.substring(0, 10)}...`)}
                       </h4>
                       <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem' }}>
-                        <Clock size={12} /> {new Date(conv.last_message).toLocaleString('es-VE', { timeZone: 'America/Caracas', hour: '2-digit', minute: '2-digit' })}
+                        <Clock size={12} /> {(() => {
+                          const date = new Date(conv.last_message);
+                          return date.toLocaleString('es-VE', { 
+                            timeZone: 'America/Caracas',
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit', 
+                            minute: '2-digit',
+                            hour12: true
+                          });
+                        })()}
                       </div>
                     </div>
                   </div>

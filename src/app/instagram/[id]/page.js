@@ -101,7 +101,15 @@ export default async function InstagramDetailPage({ params }) {
                 </div>
                 
                 <span style={{ fontSize: '0.65rem', color: 'var(--muted-foreground)', marginTop: '0.25rem' }}>
-                   {new Date(msg.timestamp).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Caracas' })}
+                   {(() => {
+                     const d = new Date(msg.timestamp);
+                     return d.toLocaleTimeString('es-VE', { 
+                       hour: '2-digit', 
+                       minute: '2-digit', 
+                       timeZone: 'America/Caracas',
+                       hour12: true
+                     });
+                   })()}
                 </span>
               </div>
             );

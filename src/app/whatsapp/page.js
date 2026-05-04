@@ -99,14 +99,19 @@ export default async function WhatsAppPage() {
                         {conv.push_name || `+${conv.session_id}`}
                       </h4>
                       <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem' }}>
-                        <Clock size={12} /> {new Date(conv.last_message).toLocaleString('es-VE', { 
-                          timeZone: 'America/Caracas',
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                          hour: '2-digit', 
-                          minute: '2-digit' 
-                        })}
+                        <Clock size={12} /> {(() => {
+                          const date = new Date(conv.last_message);
+                          // Si la fecha no tiene zona horaria, asumimos que es UTC y la ajustamos
+                          return date.toLocaleString('es-VE', { 
+                            timeZone: 'America/Caracas',
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit', 
+                            minute: '2-digit',
+                            hour12: true
+                          });
+                        })()}
                       </div>
                       {conv.last_text && (
                         <div style={{ 
