@@ -124,7 +124,7 @@ REGLAS INCUMPLIBLES (SI ROMPES ESTO, EL SISTEMA FALLARÁ):
 1. Debes copiar EXACTAMENTE el texto contenido entre <<<START>>> y <<<END>>> sin modificar absolutamente nada. No alteres iconos, saltos de línea ni palabras.
 2. PROHIBIDO usar adjetivos calificativos ("cómodo", "premium", "económico") a menos que formen parte del nombre exacto del producto.
 3. UBICACIÓN DETECTADA: {detected_location}. Si es MARGARITA, destaca el envío gratis local. Si es UNKNOWN, recuerda que los envíos nacionales se cotizan por WhatsApp (0424-8948664).
-4. FALLBACK ACTIVADO: {is_fallback}. Si es TRUE, el modelo exacto que pidieron no está. Di cordialmente: "Actualmente no tengo ese modelo exacto, pero te comparto estas excelentes opciones de nuestra colección:" y luego pega el texto de los delimitadores.
+4. FALLBACK ACTIVADO: {is_fallback}. Si es TRUE Y el cliente pidió un producto específico, entonces di cordialmente: "Actualmente no tengo ese modelo exacto, pero te comparto estas excelentes opciones de nuestra colección:" y luego pega el texto de los delimitadores.
 5. CIERRE: Siempre invita a ver más fotos en: www.bit.ly/CatalogoPractiiko
 
 PRODUCTOS A MOSTRAR:
@@ -148,6 +148,17 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
       return aiResponse;
     }
 
+    // 🛑 SHORT-CIRCUIT: Saludos puros sin intención de compra
+    if (intent === "GREETING") {
+      const aiResponse = `¡Hola ${customerName}! 👋 Bienvenido a Practiiko 💎\n\nTenemos sofás y colchones disponibles con entrega inmediata.\n\n¿Estás buscando algún modelo en específico o quieres ver opciones disponibles?\nTambién puedes ver todo aquí:\nwww.bit.ly/CatalogoPractiiko`;
+      if (source === 'whatsapp') {
+        await query(`INSERT INTO whatsapp_messages (session_id, message) VALUES ($1, $2)`, [sessionId, JSON.stringify({ role: 'assistant', content: aiResponse })]);
+      } else {
+        await query(`INSERT INTO instagram_messages (session_id, message, source, comment_id) VALUES ($1, $2, $3, $4)`, [sessionId, JSON.stringify({ role: 'assistant', content: aiResponse }), source, commentId]);
+      }
+      return aiResponse;
+    }
+
     // Sanitizar historial
     const tableName = source === 'whatsapp' ? 'whatsapp_messages' : 'instagram_messages';
     const historyRes = await query(
@@ -161,8 +172,26 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
     const location = detectLocation(message, userHistory);
     const inventory = await getInventoryData(term, intent, location);
 
+    console.log({
+      intent,
+      term,
+      location,
+      found: inventory.found,
+      isFallback: inventory.isFallback
+    });
+
+    if (!inventory.found) {
+      const aiResponse = `Hola ${customerName} 💎\n\nEn este momento no tengo productos exactos para mostrarte, pero puedes ver nuestro catálogo completo aquí:\nwww.bit.ly/CatalogoPractiiko`;
+      if (source === 'whatsapp') {
+        await query(`INSERT INTO whatsapp_messages (session_id, message) VALUES ($1, $2)`, [sessionId, JSON.stringify({ role: 'assistant', content: aiResponse })]);
+      } else {
+        await query(`INSERT INTO instagram_messages (session_id, message, source, comment_id) VALUES ($1, $2, $3, $4)`, [sessionId, JSON.stringify({ role: 'assistant', content: aiResponse }), source, commentId]);
+      }
+      return aiResponse;
+    }
+
     const finalPrompt = SYSTEM_PROMPT
-      .replace("{inventory_list}", inventory.found ? inventory.list : "NO HAY PRODUCTOS PARA MOSTRAR.")
+      .replace("{inventory_list}", inventory.list)
       .replace("{detected_location}", location)
       .replace("{is_fallback}", inventory.isFallback ? "TRUE" : "FALSE");
 
