@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { Image as ImageIcon, Video, X, Upload, Plus, Film } from "lucide-react";
+import { Image as ImageIcon, Video, X, Upload, Plus, Film, Loader2 } from "lucide-react";
 
 export default function MediaUpload({ onMediaChange, initialMedia = { images: [], video: null } }) {
   const [images, setImages] = useState(initialMedia.images || []);
@@ -12,12 +12,15 @@ export default function MediaUpload({ onMediaChange, initialMedia = { images: []
   const onDrop = useCallback(async (acceptedFiles) => {
     setIsUploading(true);
     
+    const currentImages = [...images];
+    let currentVideo = video;
+
     for (const file of acceptedFiles) {
       const isVideo = file.type.startsWith('video/');
       
-      // Validaciones básicas
-      if (isVideo && video) continue; // Solo 1 video
-      if (!isVideo && images.length >= 5) continue; // Máx 5 imágenes
+      // Validaciones de límites
+      if (isVideo && currentVideo) continue; 
+      if (!isVideo && currentImages.length >= 5) continue;
 
       const formData = new FormData();
       formData.append('file', file);
@@ -32,21 +35,31 @@ export default function MediaUpload({ onMediaChange, initialMedia = { images: []
 
         if (data.url) {
           if (isVideo) {
-            setVideo(data.url);
-            onMediaChange({ images, video: data.url });
+            currentVideo = data.url;
           } else {
-            const newImages = [...images, data.url];
-            setImages(newImages);
-            onMediaChange({ images: newImages, video });
+            currentImages.push(data.url);
           }
         }
       } catch (error) {
-        console.error("Upload error:", error);
+        console.error("Error subiendo archivo:", error);
       }
     }
     
+    setImages(currentImages);
+    setVideo(currentVideo);
+    onMediaChange({ images: currentImages, video: currentVideo });
     setIsUploading(false);
   }, [images, video, onMediaChange]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
+    onDrop,
+    accept: {
+      'image/*': ['.jpeg', '.jpg', '.png', '.webp'],
+      'video/*': ['.mp4', '.webm', '.mov']
+    },
+    disabled: isUploading,
+    multiple: true
+  });
 
   const removeImage = (index) => {
     const newImages = images.filter((_, i) => i !== index);
@@ -59,84 +72,88 @@ export default function MediaUpload({ onMediaChange, initialMedia = { images: []
     onMediaChange({ images, video: null });
   };
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
-    onDrop,
-    accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.webp'],
-      'video/*': ['.mp4', '.webm', '.mov']
-    },
-    disabled: isUploading
-  });
-
   return (
-    <div style={{ marginTop: '1.5rem' }}>
-      <label className="label">Fotos y Video del Producto (Máx 5 fotos + 1 video)</label>
+    <div style={{ width: '100%' }}>
+      <label className="label" style={{ marginBottom: '1rem', display: 'block' }}>Multimedia del Producto</label>
       
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+      {/* ZONA DE DROPZONE PRINCIPAL (GRANDE) */}
+      <div 
+        {...getRootProps()} 
+        style={{ 
+          width: '100%',
+          minHeight: '180px',
+          border: `2px dashed ${isDragActive ? 'var(--primary)' : '#cbd5e1'}`,
+          borderRadius: '16px',
+          background: isDragActive ? 'rgba(4, 119, 191, 0.05)' : 'rgba(248, 250, 252, 0.5)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: isUploading ? 'wait' : 'pointer',
+          transition: 'all 0.2s ease',
+          padding: '2rem',
+          textAlign: 'center',
+          marginBottom: '1.5rem'
+        }}
+      >
+        <input {...getInputProps()} />
         
-        {/* Imágenes subidas */}
+        {isUploading ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+            <Loader2 className="animate-spin" size={40} color="var(--primary)" />
+            <p style={{ color: 'var(--primary)', fontWeight: 600 }}>Subiendo y optimizando...</p>
+          </div>
+        ) : (
+          <>
+            <div style={{ background: 'white', padding: '1rem', borderRadius: '50%', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', marginBottom: '1rem' }}>
+              <Upload size={32} color={isDragActive ? 'var(--primary)' : '#64748b'} />
+            </div>
+            <p style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.25rem' }}>
+              {isDragActive ? '¡Suéltalos ahora!' : 'Arrastra tus fotos y video aquí'}
+            </p>
+            <p style={{ color: '#64748b', fontSize: '0.9rem' }}>
+              O haz clic para buscar en tu equipo (Máx. 5 fotos y 1 video)
+            </p>
+          </>
+        )}
+      </div>
+
+      {/* VISOR DE ARCHIVOS SUBIDOS (GRID) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '1rem' }}>
+        
+        {/* Imágenes */}
         {images.map((url, index) => (
-          <div key={index} style={{ position: 'relative', aspectRatio: '1/1', borderRadius: '12px', overflow: 'hidden', border: '1px solid #eee' }}>
+          <div key={index} className="group" style={{ position: 'relative', aspectRatio: '1/1', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
             <img src={url} alt={`Preview ${index}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             <button 
               type="button"
               onClick={() => removeImage(index)}
-              style={{ position: 'absolute', top: '5px', right: '5px', background: 'rgba(255,255,255,0.8)', border: 'none', borderRadius: '50%', padding: '4px', cursor: 'pointer', color: '#ff4757' }}
+              style={{ position: 'absolute', top: '8px', right: '8px', background: 'white', border: 'none', borderRadius: '50%', padding: '6px', cursor: 'pointer', color: '#ef4444', boxShadow: '0 2px 8px rgba(0,0,0,0.2)', display: 'flex' }}
             >
-              <X size={14} />
+              <X size={14} strokeWidth={3} />
             </button>
             {index === 0 && (
-              <span style={{ position: 'absolute', bottom: '0', left: '0', right: '0', background: 'rgba(4, 119, 191, 0.8)', color: 'white', fontSize: '10px', textAlign: 'center', padding: '2px', fontWeight: 800 }}>PRINCIPAL</span>
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'var(--primary)', color: 'white', fontSize: '10px', fontWeight: 900, textAlign: 'center', padding: '4px', letterSpacing: '1px' }}>
+                IMAGEN PRINCIPAL
+              </div>
             )}
           </div>
         ))}
 
-        {/* Video subido */}
+        {/* Video */}
         {video && (
-          <div style={{ position: 'relative', aspectRatio: '1/1', borderRadius: '12px', overflow: 'hidden', border: '1px solid #eee', background: '#f8f9fa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <video src={video} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div style={{ position: 'relative', aspectRatio: '1/1', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0', background: '#000' }}>
+            <video src={video} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.8 }} />
             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-              <Film size={32} color="white" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }} />
+              <Film size={32} color="white" />
             </div>
             <button 
               type="button"
               onClick={removeVideo}
-              style={{ position: 'absolute', top: '5px', right: '5px', background: 'rgba(255,255,255,0.8)', border: 'none', borderRadius: '50%', padding: '4px', cursor: 'pointer', color: '#ff4757' }}
+              style={{ position: 'absolute', top: '8px', right: '8px', background: 'white', border: 'none', borderRadius: '50%', padding: '6px', cursor: 'pointer', color: '#ef4444', boxShadow: '0 2px 8px rgba(0,0,0,0.2)', display: 'flex' }}
             >
-              <X size={14} />
+              <X size={14} strokeWidth={3} />
             </button>
-          </div>
-        )}
-
-        {/* Dropzone */}
-        {(images.length < 5 || !video) && (
-          <div 
-            {...getRootProps()} 
-            style={{ 
-              aspectRatio: '1/1', 
-              border: `2px dashed ${isDragActive ? 'var(--primary)' : '#ddd'}`, 
-              borderRadius: '12px', 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              cursor: isUploading ? 'wait' : 'pointer',
-              background: isDragActive ? 'rgba(4, 119, 191, 0.05)' : 'transparent',
-              transition: 'all 0.2s',
-              opacity: isUploading ? 0.5 : 1
-            }}
-          >
-            <input {...getInputProps()} />
-            {isUploading ? (
-              <div className="animate-spin" style={{ color: 'var(--primary)' }}><Plus size={24} /></div>
-            ) : (
-              <>
-                <Plus size={24} color="#999" />
-                <span style={{ fontSize: '10px', color: '#999', marginTop: '4px', fontWeight: 700, textAlign: 'center', padding: '0 5px' }}>
-                  Añadir Multimedia
-                </span>
-              </>
-            )}
           </div>
         )}
       </div>
