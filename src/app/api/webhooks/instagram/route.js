@@ -70,7 +70,11 @@ export async function POST(req) {
               const globalRes = await query("SELECT value FROM app_settings WHERE key = 'global_bot_enabled'");
               const isGlobalEnabled = globalRes.rows.length > 0 ? globalRes.rows[0].value === 'true' : true;
               
-              if (!isGlobalEnabled) {
+              // 🌟 WHITELIST DE PRUEBAS IG
+              const TEST_ACCOUNTS = ['practiiko']; // Puedes añadir tu @username personal aquí
+              const isTester = TEST_ACCOUNTS.includes(userInfo?.username) || TEST_ACCOUNTS.includes(senderId);
+
+              if (!isGlobalEnabled && !isTester) {
                 console.log(`[INSTAGRAM DM] BREAKER GLOBAL ACTIVADO. IA pausada mundialmente. Ignorando a ${senderId}.`);
                 return;
               }
@@ -124,7 +128,11 @@ export async function POST(req) {
               const globalRes = await query("SELECT value FROM app_settings WHERE key = 'global_bot_enabled'");
               const isGlobalEnabled = globalRes.rows.length > 0 ? globalRes.rows[0].value === 'true' : true;
               
-              if (!isGlobalEnabled) {
+              // 🌟 WHITELIST DE PRUEBAS IG
+              const TEST_ACCOUNTS = ['practiiko']; // Puedes añadir tu @username personal aquí
+              const isTester = TEST_ACCOUNTS.includes(username) || TEST_ACCOUNTS.includes(senderId);
+
+              if (!isGlobalEnabled && !isTester) {
                 console.log(`[INSTAGRAM COMMENT] BREAKER GLOBAL ACTIVADO. IA pausada mundialmente.`);
                 return;
               }

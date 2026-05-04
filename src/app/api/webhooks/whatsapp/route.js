@@ -86,7 +86,11 @@ export async function POST(req) {
       const globalRes = await query("SELECT value FROM app_settings WHERE key = 'global_bot_enabled'");
       const isGlobalEnabled = globalRes.rows.length > 0 ? globalRes.rows[0].value === 'true' : true;
       
-      if (!isGlobalEnabled) {
+      // 🌟 WHITELIST DE PRUEBAS: Añade aquí los números que siempre deben funcionar
+      const TEST_NUMBERS = ['584140108030']; // Tu número personal de Hector
+      const isTester = TEST_NUMBERS.includes(senderNumber);
+
+      if (!isGlobalEnabled && !isTester) {
         console.log(`[WHATSAPP] BREAKER GLOBAL ACTIVADO. IA pausada mundialmente. Ignorando a ${senderNumber}.`);
         return NextResponse.json({ status: "global_paused" });
       }
