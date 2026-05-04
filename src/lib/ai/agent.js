@@ -6,12 +6,12 @@ let _model;
 function getModel() {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   const baseUrl = process.env.DEEPSEEK_API_URL || "https://api.deepseek.com";
-  
+
   if (!apiKey || apiKey === "") {
     if (process.env.NODE_ENV === 'production') {
       console.warn("⚠️ Advertencia: DEEPSEEK_API_KEY no detectada.");
     }
-    return null; 
+    return null;
   }
 
   if (!_model) {
@@ -124,7 +124,7 @@ async function getInventory(term, intent, location) {
     }).join("\n\n");
 
     console.log(`[DB DEBUG] Productos encontrados para "${term}": ${rows.length}`);
-    
+
     return { found: rows.length > 0, text, isFallback };
   } catch (e) {
     console.error("[DB ERROR]:", e);
@@ -137,38 +137,35 @@ async function getInventory(term, intent, location) {
  */
 async function buildResponse(message, customerName, inventory, location, history) {
   const isMargarita = location === "MARGARITA";
-  
+
   const prompt = `
-IDENTIDAD: Eres el Agente Virtual oficial de Practiiko 💎. Especialista en ventas y cierre comercial.
-
-REGLAS DE ORO:
-1. TRATO: Tratar siempre de "Usted". Tono profesional y elegante.
-2. CONTEXTO: Revisa el historial abajo. Si el cliente ya dijo su ciudad o el modelo, NO lo preguntes de nuevo.
-3. PRECIOS: 
-   - SI ya tienes Modelo y Ciudad: Da el precio inmediatamente (Primero tasa BCV, luego precio especial divisas).
-   - SI falta algo: Pregunta educadamente lo que falta.
+IDENTIDAD: Eres el asistente de ventas del equipo de Practiiko. No eres un chatbot. Atiendes los clientes interesados en los productos que vendemos. Tu objetivo es responder las dudas de los clientes.
+REGLAS CRÍTICAS DE BREVEDAD:
+1. SÉ BREVE: Máximo 2 frases por respuesta. No des explicaciones largas.
+2. GREETING: Si el cliente solo saluda ("hola"), responde únicamente con un saludo cordial y pregunta cómo puedes asesorarle hoy. NO des lista de productos ni pidas ciudad todavía.
+3. PRECIOS: Solo da precios si tienes el MODELO y la CIUDAD. Si falta la ciudad, pídela brevemente y amablemente.
 4. ENVÍOS: 
-   - Margarita: "Envío sin costo adicional o retiro en tienda (C.C. Terranova Plaza)".
-   - Nacional: "📦 Envío exclusivo por TEALCA. Costo se confirma en videollamada".
-5. CIERRE: Invita al catálogo www.bit.ly/CatalogoPractiiko o videollamada.
+   - Si esta en Margarita o sus adyacencias: "El envío es GRATIS o puedes retirar tu pedido en C.C. Terranova Plaza.".
+   - Si esta fuera de Margarita: "Envíos solo por la empresa Tealca (El costo de envio y del producto se confirma con un asesor de ventas directamente por Whatsapp)".
+5. ESTILO: Trato de "Usted", elegante y directo. Sin emojis excesivos (máximo 1 o 2). Evita ser muy robotico, se mas natural, se un poco mas empatico.
 
-INVENTARIO DISPONIBLE:
+INVENTARIO PARA REFERENCIA (No lo recites todo):
 ${inventory.text}
 
-HISTORIAL DE CONVERSACIÓN:
+HISTORIAL RECIENTE:
 ${history}
 
-MENSAJE ACTUAL DEL CLIENTE:
+MENSAJE DEL CLIENTE:
 ${message}
 
-CIERRE DE MARCA:
-Es lujo, es simple, es Practiiko 💎
+CIERRE OBLIGATORIO:
+Es lujo, es simple, es Practiiko.
 `;
 
   try {
     const model = getModel();
     if (!model) throw new Error("Model not initialized (missing API Key)");
-    
+
     const response = await model.invoke([
       new SystemMessage(prompt),
       new HumanMessage(message)
@@ -191,11 +188,11 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
     const intent = detectIntent(message);
 
     // RESPUESTAS RÁPIDAS
-    // GESTIÓN DE INTENCIONES ESPECIALES (No cortocircuitamos, dejamos que Gemini les de forma)
+    // GESTIÓN DE INTENCIONES ESPECIALES (No cortocircuitamos, dejamos que Deepseek les de forma)
     let currentIntent = intent;
     if (intent === "LOCATION_UPDATE") currentIntent = "CATALOG";
-    
-    // Si es un saludo o no hay intención clara, forzamos catálogo para que Gemini tenga algo que mostrar
+
+    // Si es un saludo o no hay intención clara, forzamos catálogo para que Deepseek tenga algo que mostrar
     if (intent === "GREETING" || intent === "OTHER") {
       currentIntent = "CATALOG";
     }
@@ -223,7 +220,7 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
     // Si no hay inventario y no es un saludo, damos respuesta de fallback
     if (!inventory.found && intent !== "GREETING" && intent !== "OTHER") {
       const noProdMsg = `No encontré ese modelo exacto 💎\n\nPero puedes ver todo nuestro catálogo aquí:\nwww.bit.ly/CatalogoPractiiko`;
-      
+
       if (source === 'whatsapp') {
         await query(`INSERT INTO whatsapp_messages (session_id, message) VALUES ($1, $2)`, [sessionId, JSON.stringify({ role: 'assistant', content: noProdMsg })]);
       } else {
@@ -248,7 +245,7 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
   } catch (error) {
     console.error("CRITICAL AGENT ERROR:", error);
     const errorMsg = "Error consultando inventario 💎";
-    
+
     // Intentar guardar el error en la DB para que el admin lo vea
     try {
       const table = source === 'whatsapp' ? 'whatsapp_messages' : 'instagram_messages';
@@ -260,7 +257,7 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
     } catch (dbErr) {
       console.error("Failed to log error to DB:", dbErr);
     }
-    
+
     return errorMsg;
   }
 }
