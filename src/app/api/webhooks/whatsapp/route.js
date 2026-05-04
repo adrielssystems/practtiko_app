@@ -75,7 +75,14 @@ export async function POST(req) {
         [senderNumber, pushName]
       );
 
-      // 4. Verificar si el bot está pausado para este cliente
+      // 4. GUARDAR MENSAJE DEL USUARIO INMEDIATAMENTE (Para que aparezca en el board)
+      await query(
+        `INSERT INTO whatsapp_messages (session_id, message) VALUES ($1, $2)`,
+        [senderNumber, JSON.stringify({ role: 'user', content: userMessage })]
+      );
+      console.log(`[WHATSAPP] Mensaje de usuario guardado para ${senderNumber}`);
+
+      // 5. Verificar si el bot está pausado para este cliente
       const customerRes = await query("SELECT ai_enabled FROM whatsapp_customers WHERE id = $1", [senderNumber]);
       const isAiEnabled = customerRes.rows[0]?.ai_enabled ?? true;
 
@@ -84,23 +91,18 @@ export async function POST(req) {
         return NextResponse.json({ status: "bot_paused" });
       }
 
-      // 5. Procesar con IA y responder (en segundo plano)
-      console.log(`[WHATSAPP] Procesando mensaje para ${senderNumber}...`);
+      // 6. Procesar con IA y responder (en segundo plano)
+      console.log(`[WHATSAPP] Procesando respuesta de IA para ${senderNumber}...`);
       processChatMessage(userMessage, senderNumber, 'whatsapp', null, pushName).then(async (aiResponse) => {
         // Enviar a WhatsApp
         await sendWhatsAppMessage(senderNumber, aiResponse);
-        console.log(`[WHATSAPP] Respuesta enviada a ${senderNumber}`);
         
-        // Guardar en historial
+        // Guardar SOLO la respuesta del bot (el del usuario ya se guardó arriba)
         await query(
-          `INSERT INTO whatsapp_messages (session_id, message) VALUES ($1, $2), ($1, $3)`,
-          [
-            senderNumber, 
-            JSON.stringify({ role: 'user', content: userMessage }),
-            JSON.stringify({ role: 'assistant', content: aiResponse })
-          ]
+          `INSERT INTO whatsapp_messages (session_id, message) VALUES ($1, $2)`,
+          [senderNumber, JSON.stringify({ role: 'assistant', content: aiResponse })]
         );
-        console.log(`[WHATSAPP] Conversación guardada en DB para ${senderNumber}`);
+        console.log(`[WHATSAPP] Respuesta de IA guardada para ${senderNumber}`);
       }).catch(e => console.error("[ERROR WHATSAPP AI]:", e));
     }
 
