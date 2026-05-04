@@ -25,7 +25,7 @@ export default function LayoutShell({ children }) {
   }
 
   const navItems = [
-    { name: "Dashboard", href: "/", icon: LayoutDashboard },
+    { name: "Overview", href: "/", icon: LayoutDashboard },
     { name: 'Productos', href: '/products', icon: Package },
     { name: 'Instagram', href: '/instagram', icon: MessageCircle },
     { name: 'WhatsApp', href: '/whatsapp', icon: MessageSquare },
