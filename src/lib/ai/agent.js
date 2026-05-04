@@ -113,53 +113,53 @@ async function getInventory(term, intent, location) {
       return { found: false };
     }
 
-    const showPrices = location === "MARGARITA";
-
     const text = rows.map(p => {
-      return `
-💎 *${p.name}* (Código: ${p.code})
-${showPrices
-          ? `Precio BCV: $${p.price_bcv}\nPrecio CASH: $${p.price_cash} 💎`
-          : `Venta Nacional: Escríbenos al WhatsApp 0424-8948664 💎`}
-`;
-    }).join("\n");
+      return `💎 PRODUCTO: ${p.name}
+- Código: ${p.code}
+- Categoría: ${p.category}
+- Descripción: ${p.description || "N/A"}
+- Precio BCV: $${p.price_bcv || 'Consultar'}
+- Precio ESPECIAL (Divisas/Zelle): $${p.price_cash || 'Consultar'}
+- Envío: ${location === "MARGARITA" ? "Gratis" : "TEALCA (Cobro Destino)"} 💎`;
+    }).join("\n\n");
 
-    return { found: true, text, isFallback };
-
+    console.log(`[DB DEBUG] Productos encontrados para "${term}": ${rows.length}`);
+    
+    return { found: rows.length > 0, text, isFallback };
   } catch (e) {
-    console.error(e);
-    return { found: false };
+    console.error("[DB ERROR]:", e);
+    return { found: false, text: "", isFallback: false };
   }
 }
 
 /**
  * RESPUESTA FINAL (LLM CON GEMINI)
  */
-async function buildResponse(message, customerName, inventory, location) {
+async function buildResponse(message, customerName, inventory, location, history) {
   const isMargarita = location === "MARGARITA";
   
   const prompt = `
-IDENTIDAD: Eres el Agente Virtual oficial de Practiiko 💎. Especialista en ventas, atención al cliente y cierre comercial.
+IDENTIDAD: Eres el Agente Virtual oficial de Practiiko 💎. Especialista en ventas y cierre comercial.
 
 REGLAS DE ORO:
-1. TRATO: Tratar siempre de "Usted". Tono profesional, elegante y cercano.
-2. BREVEDAD: Máximo 3 líneas por párrafo. Natural para WhatsApp.
-3. PRECIOS: NO dar precios hasta tener: 1) Modelo exacto y 2) Ciudad del cliente.
-   - Si falta algo, pregunta: "¿Con gusto se lo indico. ¿Qué modelo exacto desea y en qué ciudad se encuentra?"
-   - Al dar precios: Mostrar primero tasa BCV y luego precio especial en divisas (Zelle, Efectivo).
+1. TRATO: Tratar siempre de "Usted". Tono profesional y elegante.
+2. CONTEXTO: Revisa el historial abajo. Si el cliente ya dijo su ciudad o el modelo, NO lo preguntes de nuevo.
+3. PRECIOS: 
+   - SI ya tienes Modelo y Ciudad: Da el precio inmediatamente (Primero tasa BCV, luego precio especial divisas).
+   - SI falta algo: Pregunta educadamente lo que falta.
 4. ENVÍOS: 
-   - Margarita: "Podemos enviárselo sin costo adicional o puede retirarlo en tienda (C.C. Terranova Plaza)".
-   - Nacional: "📦 Enviamos exclusivamente por TEALCA. El costo se confirma en videollamada". (NUNCA mencionar MRW o Zoom).
-5. MULTIMEDIA: No puedes enviar fotos. Envía siempre: www.bit.ly/CatalogoPractiiko.
-
-FLUJO DE VENTA (Aplica según la fase):
-- Paso 1 (Descubrimiento): Si no está claro, pregunta producto, tamaño y ciudad.
-- Paso 2 (Recomendación): Sugiere el producto como la solución ideal.
-- Paso 3 (Deseo): Usa frases como "Muy solicitado", "Excelente relación diseño/calidad".
-- Paso 4 (Cierre): Invita al catálogo o a una videollamada (Martes o Jueves).
+   - Margarita: "Envío sin costo adicional o retiro en tienda (C.C. Terranova Plaza)".
+   - Nacional: "📦 Envío exclusivo por TEALCA. Costo se confirma en videollamada".
+5. CIERRE: Invita al catálogo www.bit.ly/CatalogoPractiiko o videollamada.
 
 INVENTARIO DISPONIBLE:
 ${inventory.text}
+
+HISTORIAL DE CONVERSACIÓN:
+${history}
+
+MENSAJE ACTUAL DEL CLIENTE:
+${message}
 
 CIERRE DE MARCA:
 Es lujo, es simple, es Practiiko 💎
@@ -200,20 +200,20 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
       currentIntent = "CATALOG";
     }
 
-    // historial
+    // historial (últimos 6 mensajes para contexto completo)
     const table = source === 'whatsapp' ? 'whatsapp_messages' : 'instagram_messages';
 
     const historyRes = await query(
-      `SELECT message FROM ${table} WHERE session_id = $1 AND (message::json->>'role') = 'user' ORDER BY created_at DESC LIMIT 3`,
+      `SELECT message FROM ${table} WHERE session_id = $1 ORDER BY created_at DESC LIMIT 6`,
       [sessionId]
     );
 
-    const history = historyRes.rows
-      .map(r => {
-        const msg = typeof r.message === 'string' ? JSON.parse(r.message) : r.message;
-        return msg.content || "";
-      })
-      .join(" ");
+    const historyArray = historyRes.rows.reverse().map(r => {
+      const msg = typeof r.message === 'string' ? JSON.parse(r.message) : r.message;
+      return `${msg.role === 'user' ? 'Cliente' : 'Agente'}: ${msg.content}`;
+    });
+
+    const history = historyArray.join("\n");
 
     const location = detectLocation(message, history);
 
@@ -232,7 +232,7 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
       return noProdMsg;
     }
 
-    const response = await buildResponse(message, customerName, inventory, location);
+    const response = await buildResponse(message, customerName, inventory, location, history);
 
     // guardar
     if (source === 'whatsapp') {
