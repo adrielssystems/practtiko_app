@@ -68,7 +68,8 @@ export async function POST(req) {
 
               // 1. Verificar si el bot está pausado para este cliente
               const customerRes = await query("SELECT ai_enabled FROM instagram_customers WHERE id = $1", [senderId]);
-              const isAiEnabled = customerRes.rows[0]?.ai_enabled ?? true;
+              // const isAiEnabled = customerRes.rows[0]?.ai_enabled ?? true;
+              const isAiEnabled = false; // DESCONECTADO TEMPORALMENTE POR SOLICITUD
 
               if (!isAiEnabled) {
                 console.log(`[INSTAGRAM DM] Bot pausado para ${senderId}. No se generará respuesta automática.`);
@@ -113,7 +114,8 @@ export async function POST(req) {
 
               // Verificar pausa del bot
               const customerRes = await query("SELECT ai_enabled FROM instagram_customers WHERE id = $1", [senderId]);
-              const isAiEnabled = customerRes.rows[0]?.ai_enabled ?? true;
+              // const isAiEnabled = customerRes.rows[0]?.ai_enabled ?? true;
+              const isAiEnabled = false; // DESCONECTADO TEMPORALMENTE POR SOLICITUD
 
               if (!isAiEnabled) {
                 console.log(`[INSTAGRAM COMMENT] Bot pausado para ${senderId}. No se generará respuesta automática.`);

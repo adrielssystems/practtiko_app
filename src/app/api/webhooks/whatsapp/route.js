@@ -84,7 +84,8 @@ export async function POST(req) {
 
       // 5. Verificar si el bot está pausado para este cliente
       const customerRes = await query("SELECT ai_enabled FROM whatsapp_customers WHERE id = $1", [senderNumber]);
-      const isAiEnabled = customerRes.rows[0]?.ai_enabled ?? true;
+      // const isAiEnabled = customerRes.rows[0]?.ai_enabled ?? true;
+      const isAiEnabled = false; // DESCONECTADO TEMPORALMENTE POR SOLICITUD
 
       if (!isAiEnabled) {
         console.log(`[WHATSAPP] Bot pausado para ${senderNumber}. No se generará respuesta automática.`);
