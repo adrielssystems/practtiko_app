@@ -322,5 +322,3 @@ export default async function OverviewPage() {
     </div>
   );
 }
-  );
-}
