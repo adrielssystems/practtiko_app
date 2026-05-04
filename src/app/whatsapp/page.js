@@ -104,34 +104,36 @@ export default async function WhatsAppPage() {
                     </div>
                   </Link>
 
+                  {/* BOTONES EN ESQUINA ABSOLUTA */}
                   <div 
                     style={{ 
+                      position: 'absolute',
+                      top: '1rem',
+                      right: '1rem',
                       display: 'flex', 
-                      flexDirection: 'column', 
-                      alignItems: 'flex-end', 
                       gap: '0.5rem', 
-                      flexShrink: 0, 
-                      position: 'relative', 
-                      zIndex: 999 
+                      alignItems: 'center',
+                      zIndex: 9999,
+                      pointerEvents: 'auto'
                     }}
                   >
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <BotPauseToggle id={conv.session_id} platform="whatsapp" initialStatus={conv.ai_enabled ?? true} />
-                      <DeleteChatButton sessionId={conv.session_id} platform="whatsapp" />
+                    <BotPauseToggle id={conv.session_id} platform="whatsapp" initialStatus={conv.ai_enabled ?? true} />
+                    <DeleteChatButton sessionId={conv.session_id} platform="whatsapp" />
+                  </div>
+
+                  {/* INFO DE MENSAJES Y PLATAFORMA */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem', marginTop: 'auto' }}>
+                    <div style={{ 
+                      background: 'rgba(37, 211, 102, 0.1)', 
+                      color: '#128C7E', 
+                      padding: '0.2rem 0.5rem', 
+                      borderRadius: '6px', 
+                      fontSize: '0.65rem', 
+                      fontWeight: 800
+                    }}>
+                      {conv.total_messages} MSG
                     </div>
-                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                      <div style={{ 
-                        background: 'rgba(37, 211, 102, 0.1)', 
-                        color: '#128C7E', 
-                        padding: '0.2rem 0.5rem', 
-                        borderRadius: '6px', 
-                        fontSize: '0.65rem', 
-                        fontWeight: 800
-                      }}>
-                        {conv.total_messages} MSG
-                      </div>
-                      <span style={{ fontSize: '0.6rem', background: '#25D366', color: 'white', padding: '2px 8px', borderRadius: '6px', fontWeight: 800, textTransform: 'uppercase' }}>WhatsApp</span>
-                    </div>
+                    <span style={{ fontSize: '0.6rem', background: '#25D366', color: 'white', padding: '2px 8px', borderRadius: '6px', fontWeight: 800, textTransform: 'uppercase' }}>WhatsApp</span>
                   </div>
                 </div>
                 
