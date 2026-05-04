@@ -4,12 +4,18 @@ import { query } from "@/lib/db";
 
 let _model;
 function getModel() {
+  const apiKey = process.env.GOOGLE_API_KEY;
+  
+  if (!apiKey || apiKey === "") {
+    throw new Error("Falta la variable GOOGLE_API_KEY en las variables de entorno de Easypanel.");
+  }
+
   if (!_model) {
     _model = new ChatGoogleGenerativeAI({
-      apiKey: process.env.GOOGLE_API_KEY || "dummy_key_for_build",
+      apiKey: apiKey,
       modelName: "gemini-1.5-flash",
       maxOutputTokens: 512,
-      temperature: 0,
+      temperature: 0.1, // Un poco más de creatividad para evitar lo robótico
     });
   }
   return _model;

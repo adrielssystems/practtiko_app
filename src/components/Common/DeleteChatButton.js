@@ -14,7 +14,7 @@ export default function DeleteChatButton({ sessionId, platform = 'instagram' }) 
     e.preventDefault(); 
     e.stopPropagation();
 
-    if (!confirm("¿Estás seguro de que quieres borrar esta conversación? Esta acción no se puede deshacer.")) {
+    if (!window.confirm("¿Estás seguro de que quieres borrar esta conversación? Esta acción no se puede deshacer.")) {
       return;
     }
 
@@ -30,10 +30,16 @@ export default function DeleteChatButton({ sessionId, platform = 'instagram' }) 
       });
 
       if (res.ok) {
-        addToast("Conversación eliminada con éxito", "success");
-        router.refresh(); 
+        addToast("Conversación eliminada", "success");
+        // Forzar recarga de datos
+        router.refresh();
+        // Fallback: si en 1 segundo sigue ahí, forzar reload
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
-        addToast("Error al borrar la conversación", "error");
+        const data = await res.json();
+        addToast(`Error: ${data.error || 'No se pudo borrar'}`, "error");
       }
     } catch (error) {
       addToast("Error de conexión", "error");

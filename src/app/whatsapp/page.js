@@ -119,8 +119,8 @@ export default async function WhatsAppPage() {
                     </div>
                   </Link>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem', flexShrink: 0 }}>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem', flexShrink: 0, position: 'relative', zIndex: 10 }}>
+                    <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
                       <BotPauseToggle id={conv.session_id} platform="whatsapp" initialStatus={conv.ai_enabled ?? true} />
                       <DeleteChatButton sessionId={conv.session_id} platform="whatsapp" />
                       <div style={{ 
