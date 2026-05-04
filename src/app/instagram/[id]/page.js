@@ -9,7 +9,8 @@ import ManualReplyInput from "@/components/Common/ManualReplyInput";
 async function getChatHistory(sessionId) {
   try {
     const res = await query(`
-      SELECT * FROM instagram_messages 
+      SELECT *, to_char(created_at AT TIME ZONE 'America/Caracas', 'HH12:MI AM') as time_fmt 
+      FROM instagram_messages 
       WHERE session_id = $1 
       ORDER BY created_at ASC
     `, [sessionId]);
@@ -101,15 +102,7 @@ export default async function InstagramDetailPage({ params }) {
                 </div>
                 
                 <span style={{ fontSize: '0.65rem', color: 'var(--muted-foreground)', marginTop: '0.25rem' }}>
-                   {(() => {
-                     const d = new Date(msg.timestamp);
-                     return d.toLocaleTimeString('es-VE', { 
-                       hour: '2-digit', 
-                       minute: '2-digit', 
-                       timeZone: 'America/Caracas',
-                       hour12: true
-                     });
-                   })()}
+                   {msg.time_fmt}
                 </span>
               </div>
             );

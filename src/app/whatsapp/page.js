@@ -12,6 +12,7 @@ async function getConversations() {
       SELECT 
         session_id, 
         MAX(created_at) as last_message,
+        to_char(MAX(created_at) AT TIME ZONE 'America/Caracas', 'DD/MM/YYYY, HH12:MI AM') as last_message_fmt,
         COUNT(*) as total_messages,
         (SELECT full_name FROM whatsapp_customers WHERE id = session_id LIMIT 1) as push_name,
         (SELECT ai_enabled FROM whatsapp_customers WHERE id = session_id LIMIT 1) as ai_enabled,
@@ -99,19 +100,7 @@ export default async function WhatsAppPage() {
                         {conv.push_name || `+${conv.session_id}`}
                       </h4>
                       <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem' }}>
-                        <Clock size={12} /> {(() => {
-                          const date = new Date(conv.last_message);
-                          // Si la fecha no tiene zona horaria, asumimos que es UTC y la ajustamos
-                          return date.toLocaleString('es-VE', { 
-                            timeZone: 'America/Caracas',
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit', 
-                            minute: '2-digit',
-                            hour12: true
-                          });
-                        })()}
+                        <Clock size={12} /> {conv.last_message_fmt}
                       </div>
                       {conv.last_text && (
                         <div style={{ 

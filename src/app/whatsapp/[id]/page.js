@@ -9,7 +9,7 @@ import ManualReplyInput from "@/components/Common/ManualReplyInput";
 async function getChatMessages(id) {
   try {
     const res = await query(
-      "SELECT message, created_at FROM whatsapp_messages WHERE session_id = $1 ORDER BY created_at ASC",
+      "SELECT message, created_at, to_char(created_at AT TIME ZONE 'America/Caracas', 'HH12:MI AM') as time_fmt FROM whatsapp_messages WHERE session_id = $1 ORDER BY created_at ASC",
       [id]
     );
     return res.rows;
@@ -105,16 +105,7 @@ export default async function WhatsAppChatPage({ params }) {
                   justifyContent: 'flex-end',
                   gap: '0.3rem'
                 }}>
-                  <Clock size={10} />
-                  {(() => {
-                    const d = new Date(m.created_at);
-                    return d.toLocaleTimeString('es-VE', { 
-                      hour: '2-digit', 
-                      minute: '2-digit',
-                      timeZone: 'America/Caracas',
-                      hour12: true
-                    });
-                  })()}
+                  <Clock size={10} /> {m.time_fmt}
                 </div>
                 {isBot && (
                   <div style={{ 
