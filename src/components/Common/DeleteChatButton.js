@@ -11,19 +11,20 @@ export default function DeleteChatButton({ sessionId, platform = 'instagram' }) 
   const { addToast } = useToast();
 
   const handleDelete = async (e) => {
+    // DIAGNÓSTICO AGRESIVO
+    window.alert("¡BOTÓN DE BORRADO PULSADO!");
+    console.log("BORRANDO SESIÓN:", sessionId);
+
     e.preventDefault(); 
     e.stopPropagation();
 
-    console.log("[DEBUG] Click en eliminar para sesión:", sessionId);
-    
-    if (!window.confirm(`¿Estás seguro de que quieres borrar la conversación de ${sessionId}?`)) {
+    if (!window.confirm(`¿Seguro que quieres eliminar a ${sessionId}?`)) {
       return;
     }
 
     setIsDeleting(true);
 
     try {
-      console.log("[DEBUG] Llamando a API de borrado...");
       const endpoint = platform === 'whatsapp' ? "/api/whatsapp/delete-chat" : "/api/instagram/delete-chat";
       
       const res = await fetch(endpoint, {
@@ -57,21 +58,21 @@ export default function DeleteChatButton({ sessionId, platform = 'instagram' }) 
       disabled={isDeleting}
       title="Borrar conversación"
       style={{ 
-        background: 'none', 
+        background: '#ff4d4d', // ROJO CHILLÓN PARA PRUEBA
         border: 'none', 
-        color: isDeleting ? '#ccc' : '#ff4d4d', 
-        cursor: isDeleting ? 'not-allowed' : 'pointer',
-        padding: '0.5rem',
-        borderRadius: '8px',
+        color: 'white', 
+        cursor: 'pointer',
+        padding: '0.8rem', // MÁS GRANDE
+        borderRadius: '12px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        transition: 'all 0.2s'
+        position: 'relative',
+        zIndex: 1000,
+        pointerEvents: 'auto' // FORZAR CLIC
       }}
-      onMouseOver={e => !isDeleting && (e.currentTarget.style.background = 'rgba(255, 77, 77, 0.1)')}
-      onMouseOut={e => e.currentTarget.style.background = 'none'}
     >
-      <Trash2 size={18} />
+      <Trash2 size={20} />
     </button>
   );
 }
