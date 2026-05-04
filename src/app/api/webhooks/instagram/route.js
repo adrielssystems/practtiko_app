@@ -76,7 +76,7 @@ export async function POST(req) {
 
               if (!isGlobalEnabled && !isTester) {
                 console.log(`[INSTAGRAM DM] BREAKER GLOBAL ACTIVADO. IA pausada mundialmente. Ignorando a ${senderId}.`);
-                return;
+                return NextResponse.json({ status: "global_paused" });
               }
 
               // 2. Verificar si el bot está pausado para este cliente
@@ -85,7 +85,7 @@ export async function POST(req) {
 
               if (!isAiEnabled) {
                 console.log(`[INSTAGRAM DM] Bot pausado para ${senderId}. No se generará respuesta automática.`);
-                return; // Detener aquí
+                return NextResponse.json({ status: "bot_paused" });
               }
 
               // 2. Procesar con IA si está habilitado
@@ -134,7 +134,7 @@ export async function POST(req) {
 
               if (!isGlobalEnabled && !isTester) {
                 console.log(`[INSTAGRAM COMMENT] BREAKER GLOBAL ACTIVADO. IA pausada mundialmente.`);
-                return;
+                return NextResponse.json({ status: "global_paused" });
               }
 
               // Verificar pausa del bot individual
@@ -143,7 +143,7 @@ export async function POST(req) {
 
               if (!isAiEnabled) {
                 console.log(`[INSTAGRAM COMMENT] Bot pausado para ${senderId}. No se generará respuesta automática.`);
-                return;
+                return NextResponse.json({ status: "bot_paused" });
               }
 
               processChatMessage(userMessage, senderId, 'comment', commentId, username || 'Cliente').then(aiResponse => {
