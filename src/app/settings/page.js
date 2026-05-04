@@ -5,8 +5,6 @@ import {
   Settings, 
   Terminal, 
   Brain, 
-  Save, 
-  RefreshCw, 
   Clock, 
   Activity,
   ArrowLeft,
@@ -24,22 +22,11 @@ import { useToast } from "@/components/Toast";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("ai");
-  const [prompt, setPrompt] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [logs, setLogs] = useState([]);
   const [logsLoading, setLogsLoading] = useState(false);
   const [filter, setFilter] = useState("all");
   const [selectedLog, setSelectedLog] = useState(null);
   const { addToast } = useToast();
-
-  // Cargar prompt inicial
-  useEffect(() => {
-    fetch("/api/settings?key=ai_prompt")
-      .then(res => res.json())
-      .then(data => {
-        if (data.value) setPrompt(data.value);
-      });
-  }, []);
 
   // Cargar logs cuando se activa la pestaña
   useEffect(() => {
@@ -61,26 +48,6 @@ export default function SettingsPage() {
     }
   };
 
-  const savePrompt = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: "ai_prompt", value: prompt })
-      });
-      if (res.ok) {
-        addToast("¡Cerebro de IA actualizado!", "success");
-      } else {
-        addToast("Error al guardar el prompt", "error");
-      }
-    } catch (e) {
-      addToast("Error de conexión", "error");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto', minHeight: '100vh' }}>
       {/* Header Premium */}
@@ -93,7 +60,7 @@ export default function SettingsPage() {
             boxShadow: '0 10px 30px rgba(4, 119, 191, 0.3)',
             color: 'white'
           }}>
-            <Settings size={40} className={isLoading ? "animate-spin" : ""} />
+            <Settings size={40} />
           </div>
           <div>
             <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: '#1a1a1a', margin: 0, letterSpacing: '-0.03em' }}>
@@ -145,108 +112,48 @@ export default function SettingsPage() {
         {/* Content Area */}
         <main>
           {activeTab === 'ai' && (
-            <div className="card glass animate-in" style={{ padding: '2.5rem', borderRadius: '30px', border: '1px solid #f0f0f0', background: 'white' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>Prompt Maestro (Cerebro)</h3>
-                  <p style={{ margin: '0.5rem 0 0', fontSize: '0.95rem', color: '#666' }}>
-                    Define la personalidad, restricciones y flujo de cierre comercial del Agente Virtual.
-                  </p>
+            <div className="card glass animate-in" style={{ padding: '3rem', borderRadius: '30px', border: '1px solid #f0f0f0', background: 'white', textAlign: 'center' }}>
+              <div style={{ 
+                width: '80px', 
+                height: '80px', 
+                background: 'rgba(4, 119, 191, 0.1)', 
+                borderRadius: '25px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                margin: '0 auto 1.5rem',
+                color: 'var(--primary)'
+              }}>
+                <Brain size={40} />
+              </div>
+              
+              <h3 style={{ fontSize: '2rem', fontWeight: 900, marginBottom: '0.5rem' }}>Cerebro de IA Activo</h3>
+              <p style={{ color: '#666', fontSize: '1.1rem', maxWidth: '500px', margin: '0 auto 2.5rem' }}>
+                La inteligencia artificial de Practiiko está funcionando con su configuración maestra optimizada desde el núcleo del sistema.
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem', textAlign: 'left' }}>
+                <div style={{ padding: '1.5rem', background: '#f8f9fa', borderRadius: '20px', border: '1px solid #eee' }}>
+                  <div style={{ color: 'var(--primary)', marginBottom: '0.5rem' }}><Zap size={20} /></div>
+                  <h4 style={{ margin: '0 0 0.25rem', fontSize: '0.9rem', fontWeight: 800 }}>MODELO</h4>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#666' }}>DeepSeek-V4 (Stable)</p>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                  <button 
-                    onClick={async () => {
-                      setIsLoading(true);
-                      try {
-                        await fetch("/api/settings", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ key: "ai_prompt", value: "" })
-                        });
-                        setPrompt("");
-                        addToast("¡Cerebro restablecido al código base! 💎", "success");
-                      } catch(e) {
-                        addToast("Error al restablecer", "error");
-                      } finally {
-                        setIsLoading(false);
-                      }
-                    }}
-                    className="btn"
-                    style={{ 
-                      padding: '0.85rem 1.5rem', 
-                      borderRadius: '15px', 
-                      background: 'rgba(255, 71, 87, 0.1)', 
-                      color: '#ff4757', 
-                      border: '1px solid rgba(255, 71, 87, 0.2)',
-                      fontWeight: 800,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <RefreshCw size={18} /> Restablecer Fábrica
-                  </button>
-                  <button 
-                    onClick={savePrompt}
-                    disabled={isLoading}
-                    className="btn-primary"
-                    style={{ 
-                      padding: '0.85rem 2.5rem', 
-                      borderRadius: '15px', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '0.75rem',
-                      boxShadow: '0 10px 25px rgba(4, 119, 191, 0.2)'
-                    }}
-                  >
-                    {isLoading ? <RefreshCw className="animate-spin" size={20} /> : <Save size={20} />}
-                    {isLoading ? 'Actualizando...' : 'Guardar Cambios'}
-                  </button>
+                <div style={{ padding: '1.5rem', background: '#f8f9fa', borderRadius: '20px', border: '1px solid #eee' }}>
+                  <div style={{ color: '#128C7E', marginBottom: '0.5rem' }}><CheckCircle2 size={20} /></div>
+                  <h4 style={{ margin: '0 0 0.25rem', fontSize: '0.9rem', fontWeight: 800 }}>ESTADO</h4>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#666' }}>Optimizado & Operativo</p>
+                </div>
+                <div style={{ padding: '1.5rem', background: '#f8f9fa', borderRadius: '20px', border: '1px solid #eee' }}>
+                  <div style={{ color: '#F28705', marginBottom: '0.5rem' }}><Globe size={20} /></div>
+                  <h4 style={{ margin: '0 0 0.25rem', fontSize: '0.9rem', fontWeight: 800 }}>COBERTURA</h4>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#666' }}>Instagram & WhatsApp</p>
                 </div>
               </div>
 
-              <div style={{ position: 'relative' }}>
-                <textarea 
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  style={{
-                    width: '100%',
-                    height: '550px',
-                    padding: '2rem',
-                    borderRadius: '20px',
-                    border: '1px solid #e0e0e0',
-                    fontSize: '1rem',
-                    fontFamily: '"Fira Code", monospace',
-                    lineHeight: '1.6',
-                    background: '#1a1a1a',
-                    color: '#d1d1d1',
-                    outline: 'none',
-                    resize: 'vertical',
-                    boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.1)'
-                  }}
-                />
-                <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', gap: '0.5rem' }}>
-                  <span style={{ padding: '4px 10px', background: '#333', borderRadius: '6px', fontSize: '0.7rem', color: '#aaa', fontWeight: 700 }}>READ-WRITE</span>
-                </div>
-              </div>
-
-              {/* Tag system for help */}
-              <div style={{ marginTop: '2rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                <div style={{ padding: '1.25rem', background: '#e7f1f9', borderRadius: '18px', border: '1px solid #cde4f5' }}>
-                  <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', color: '#0477BF', fontWeight: 800 }}>VARIABLES DINÁMICAS</h4>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    <code style={{ background: 'white', padding: '4px 8px', borderRadius: '6px', fontSize: '0.8rem', color: '#1a1a1a', border: '1px solid #b7d7f0' }}>{`{now}`}</code>
-                    <code style={{ background: 'white', padding: '4px 8px', borderRadius: '6px', fontSize: '0.8rem', color: '#1a1a1a', border: '1px solid #b7d7f0' }}>{`{customer_name}`}</code>
-                    <code style={{ background: 'white', padding: '4px 8px', borderRadius: '6px', fontSize: '0.8rem', color: '#1a1a1a', border: '1px solid #b7d7f0' }}>{`{channel}`}</code>
-                  </div>
-                </div>
-                <div style={{ padding: '1.25rem', background: '#f8f9fa', borderRadius: '18px', border: '1px solid #eee' }}>
-                  <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', color: '#666', fontWeight: 800 }}>CONSEJO PRO</h4>
-                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#666', lineHeight: '1.4' }}>
-                    Añade <b>"Responde siempre en español de Venezuela"</b> para un tono más local y cercano a tus clientes.
-                  </p>
-                </div>
+              <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid #f0f0f0' }}>
+                <p style={{ fontSize: '0.85rem', color: '#999' }}>
+                  La gestión del prompt se realiza ahora directamente en el repositorio de desarrollo para garantizar la estabilidad del Agente Virtual.
+                </p>
               </div>
             </div>
           )}

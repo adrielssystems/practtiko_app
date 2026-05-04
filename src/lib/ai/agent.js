@@ -71,10 +71,6 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
     
     const chatHistory = historyRes.rows.map(r => typeof r.message === 'string' ? JSON.parse(r.message) : r.message).map(msg => msg.role === 'user' ? new HumanMessage(msg.content) : new AIMessage(msg.content)).reverse();
 
-    // Intentar cargar el prompt personalizado desde la DB
-    const settingsRes = await query("SELECT value FROM app_settings WHERE key = 'ai_prompt'");
-    const dynamicSystemMessage = settingsRes.rows[0]?.value || SYSTEM_MESSAGE;
-
     const model = new ChatOpenAI({
       openAIApiKey: process.env.DEEPSEEK_API_KEY || "dummy_key_for_build",
       configuration: {
@@ -85,7 +81,7 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
     });
 
     const prompt = ChatPromptTemplate.fromMessages([
-      ["system", dynamicSystemMessage],
+      ["system", SYSTEM_MESSAGE],
       new MessagesPlaceholder("chat_history"),
       ["human", "{input}"],
       new MessagesPlaceholder("agent_scratchpad"),
