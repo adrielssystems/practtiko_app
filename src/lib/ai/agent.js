@@ -1,6 +1,6 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage } from "@langchain/core/messages";
-import { query } from "../db.js";
+import { query } from "@/lib/db";
 
 const model = new ChatOpenAI({
   openAIApiKey: process.env.DEEPSEEK_API_KEY || "dummy_key_for_build_only",
@@ -161,7 +161,10 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
     );
 
     const history = historyRes.rows
-      .map(r => JSON.parse(r.message).content)
+      .map(r => {
+        const msg = typeof r.message === 'string' ? JSON.parse(r.message) : r.message;
+        return msg.content || "";
+      })
       .join(" ");
 
     const location = detectLocation(message, history);
