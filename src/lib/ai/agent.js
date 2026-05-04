@@ -7,7 +7,11 @@ function getModel() {
   const apiKey = process.env.GOOGLE_API_KEY;
   
   if (!apiKey || apiKey === "") {
-    throw new Error("Falta la variable GOOGLE_API_KEY en las variables de entorno de Easypanel.");
+    // Durante el build de Next.js, no queremos que truene
+    if (process.env.NODE_ENV === 'production') {
+      console.warn("⚠️ Advertencia: GOOGLE_API_KEY no detectada. Usando modo estático.");
+    }
+    return null; 
   }
 
   if (!_model) {
@@ -152,6 +156,8 @@ FALLBACK: ${inventory.isFallback ? "TRUE" : "FALSE"}
 
   try {
     const model = getModel();
+    if (!model) throw new Error("Model not initialized (missing API Key)");
+    
     const response = await model.invoke([
       new SystemMessage(prompt),
       new HumanMessage(message)
