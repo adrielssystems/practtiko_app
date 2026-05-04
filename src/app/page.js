@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import AutoRefresh from "@/components/Common/AutoRefresh";
+import GlobalBotBreaker from "@/components/Common/GlobalBotBreaker";
 
 export const dynamic = "force-dynamic";
 
@@ -55,6 +56,10 @@ async function getDetailedStats() {
     const lastSignal = lastWebhookRes.rows[0]?.created_at;
     const isOnline = lastSignal ? (new Date() - new Date(lastSignal)) < (12 * 60 * 60 * 1000) : false;
 
+    // Estado del Breaker Global
+    const globalRes = await query("SELECT value FROM app_settings WHERE key = 'global_bot_enabled'");
+    const globalEnabled = globalRes.rows.length > 0 ? globalRes.rows[0].value === 'true' : true;
+
     return {
       products: parseInt(productsRes.rows[0]?.count || 0),
       igMessages: parseInt(igMessagesRes.rows[0]?.count || 0),
@@ -62,11 +67,12 @@ async function getDetailedStats() {
       totalCustomers: parseInt(customersRes.rows[0]?.count || 0) + parseInt(waCustomersRes.rows[0]?.count || 0),
       status: isOnline ? 'ACTIVO' : 'STANDBY',
       recentIg: recentIg.rows,
-      recentWa: recentWa.rows
+      recentWa: recentWa.rows,
+      globalEnabled
     };
   } catch (e) {
     console.error("Dashboard error:", e);
-    return { products: 0, igMessages: 0, waMessages: 0, totalCustomers: 0, status: 'Error', recentIg: [], recentWa: [] };
+    return { products: 0, igMessages: 0, waMessages: 0, totalCustomers: 0, status: 'Error', recentIg: [], recentWa: [], globalEnabled: true };
   }
 }
 
@@ -96,29 +102,33 @@ export default async function OverviewPage() {
           <h1 style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-0.03em', margin: 0, color: '#0f172a' }}>Overview</h1>
           <p style={{ color: '#64748b', fontSize: '1.1rem', marginTop: '0.25rem' }}>Gestión inteligente de ventas y atención al cliente.</p>
         </div>
-        <div style={{ 
-          background: 'white', 
-          padding: '0.75rem 1.25rem', 
-          borderRadius: '16px', 
-          boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
-          border: '1px solid #f1f5f9',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '1rem'
-        }}>
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Estado Global</p>
-            <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: data.status === 'ACTIVO' ? '#10b981' : '#f59e0b' }}>
-              {data.status}
-            </p>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          <GlobalBotBreaker initialEnabled={data.globalEnabled} />
+          
           <div style={{ 
-            width: '10px', 
-            height: '10px', 
-            borderRadius: '50%', 
-            background: data.status === 'ACTIVO' ? '#10b981' : '#f59e0b',
-            boxShadow: `0 0 12px ${data.status === 'ACTIVO' ? '#10b981' : '#f59e0b'}`
-          }}></div>
+            background: 'white', 
+            padding: '0.75rem 1.25rem', 
+            borderRadius: '16px', 
+            boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
+            border: '1px solid #f1f5f9',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem'
+          }}>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Webhook</p>
+              <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: data.status === 'ACTIVO' ? '#10b981' : '#f59e0b' }}>
+                {data.status}
+              </p>
+            </div>
+            <div style={{ 
+              width: '10px', 
+              height: '10px', 
+              borderRadius: '50%', 
+              background: data.status === 'ACTIVO' ? '#10b981' : '#f59e0b',
+              boxShadow: `0 0 12px ${data.status === 'ACTIVO' ? '#10b981' : '#f59e0b'}`
+            }}></div>
+          </div>
         </div>
       </header>
 

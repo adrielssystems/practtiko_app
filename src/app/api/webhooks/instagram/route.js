@@ -66,10 +66,18 @@ export async function POST(req) {
                 );
               }
 
-              // 1. Verificar si el bot está pausado para este cliente
+              // 1. Verificar Breaker Global
+              const globalRes = await query("SELECT value FROM app_settings WHERE key = 'global_bot_enabled'");
+              const isGlobalEnabled = globalRes.rows.length > 0 ? globalRes.rows[0].value === 'true' : true;
+              
+              if (!isGlobalEnabled) {
+                console.log(`[INSTAGRAM DM] BREAKER GLOBAL ACTIVADO. IA pausada mundialmente. Ignorando a ${senderId}.`);
+                return;
+              }
+
+              // 2. Verificar si el bot está pausado para este cliente
               const customerRes = await query("SELECT ai_enabled FROM instagram_customers WHERE id = $1", [senderId]);
-              // const isAiEnabled = customerRes.rows[0]?.ai_enabled ?? true;
-              const isAiEnabled = false; // DESCONECTADO TEMPORALMENTE POR SOLICITUD
+              const isAiEnabled = customerRes.rows[0]?.ai_enabled ?? true;
 
               if (!isAiEnabled) {
                 console.log(`[INSTAGRAM DM] Bot pausado para ${senderId}. No se generará respuesta automática.`);
@@ -112,10 +120,18 @@ export async function POST(req) {
                 [senderId, username, username]
               );
 
-              // Verificar pausa del bot
+              // Verificar Breaker Global
+              const globalRes = await query("SELECT value FROM app_settings WHERE key = 'global_bot_enabled'");
+              const isGlobalEnabled = globalRes.rows.length > 0 ? globalRes.rows[0].value === 'true' : true;
+              
+              if (!isGlobalEnabled) {
+                console.log(`[INSTAGRAM COMMENT] BREAKER GLOBAL ACTIVADO. IA pausada mundialmente.`);
+                return;
+              }
+
+              // Verificar pausa del bot individual
               const customerRes = await query("SELECT ai_enabled FROM instagram_customers WHERE id = $1", [senderId]);
-              // const isAiEnabled = customerRes.rows[0]?.ai_enabled ?? true;
-              const isAiEnabled = false; // DESCONECTADO TEMPORALMENTE POR SOLICITUD
+              const isAiEnabled = customerRes.rows[0]?.ai_enabled ?? true;
 
               if (!isAiEnabled) {
                 console.log(`[INSTAGRAM COMMENT] Bot pausado para ${senderId}. No se generará respuesta automática.`);

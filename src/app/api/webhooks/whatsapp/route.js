@@ -82,10 +82,18 @@ export async function POST(req) {
       );
       console.log(`[WHATSAPP] Mensaje de usuario guardado para ${senderNumber}`);
 
-      // 5. Verificar si el bot está pausado para este cliente
+      // 5. Verificar Breaker Global
+      const globalRes = await query("SELECT value FROM app_settings WHERE key = 'global_bot_enabled'");
+      const isGlobalEnabled = globalRes.rows.length > 0 ? globalRes.rows[0].value === 'true' : true;
+      
+      if (!isGlobalEnabled) {
+        console.log(`[WHATSAPP] BREAKER GLOBAL ACTIVADO. IA pausada mundialmente. Ignorando a ${senderNumber}.`);
+        return NextResponse.json({ status: "global_paused" });
+      }
+
+      // 6. Verificar si el bot está pausado para este cliente individual
       const customerRes = await query("SELECT ai_enabled FROM whatsapp_customers WHERE id = $1", [senderNumber]);
-      // const isAiEnabled = customerRes.rows[0]?.ai_enabled ?? true;
-      const isAiEnabled = false; // DESCONECTADO TEMPORALMENTE POR SOLICITUD
+      const isAiEnabled = customerRes.rows[0]?.ai_enabled ?? true;
 
       if (!isAiEnabled) {
         console.log(`[WHATSAPP] Bot pausado para ${senderNumber}. No se generará respuesta automática.`);
