@@ -194,9 +194,6 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
 
     const location = detectLocation(message, history);
 
-    let currentIntent = intent;
-    if (intent === "LOCATION_UPDATE") currentIntent = "CATALOG";
-
     const term = extractKeyword(message);
     const inventory = await getInventory(term, currentIntent, location);
 
