@@ -51,7 +51,7 @@ export default function BotSimulator() {
         onClick={() => setIsOpen(true)}
         style={{
           position: 'fixed',
-          bottom: '2rem',
+          top: '1.5rem',
           right: '2rem',
           background: 'var(--primary)',
           color: 'white',
@@ -78,7 +78,7 @@ export default function BotSimulator() {
   return (
     <div style={{
       position: 'fixed',
-      bottom: '2rem',
+      top: '1.5rem',
       right: '2rem',
       width: '400px',
       height: '550px',

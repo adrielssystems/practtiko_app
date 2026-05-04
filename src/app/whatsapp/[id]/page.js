@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { ChevronLeft, User, Smartphone, Clock } from "lucide-react";
 import AutoRefresh from "@/components/Common/AutoRefresh";
+import BotPauseToggle from "@/components/Common/BotPauseToggle";
 
 async function getChatMessages(id) {
   try {
@@ -19,7 +20,7 @@ async function getChatMessages(id) {
 
 async function getCustomerInfo(id) {
   try {
-    const res = await query("SELECT full_name FROM whatsapp_customers WHERE id = $1", [id]);
+    const res = await query("SELECT full_name, ai_enabled FROM whatsapp_customers WHERE id = $1", [id]);
     return res.rows[0];
   } catch (e) {
     return null;
@@ -50,12 +51,13 @@ export default async function WhatsAppChatPage({ params }) {
         }}>
           <User size={24} />
         </div>
-        <div>
+        <div style={{ flex: 1 }}>
           <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>
             {customer?.full_name || `+${id}`}
           </h2>
           <span style={{ fontSize: '0.75rem', color: '#25D366', fontWeight: 600 }}>WhatsApp Business</span>
         </div>
+        <BotPauseToggle id={id} platform="whatsapp" initialStatus={customer?.ai_enabled ?? true} />
       </header>
 
       <div style={{ 

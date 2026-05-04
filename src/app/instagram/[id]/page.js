@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { ArrowLeft, User, Bot, Clock } from "lucide-react";
 import AutoRefresh from "@/components/Common/AutoRefresh";
+import BotPauseToggle from "@/components/Common/BotPauseToggle";
 
 async function getChatHistory(sessionId) {
   try {
@@ -26,9 +27,10 @@ async function getChatHistory(sessionId) {
 export default async function InstagramDetailPage({ params }) {
   const { id } = await params;
   
-  // Obtener nombre del cliente
-  const customerRes = await query("SELECT full_name FROM instagram_customers WHERE id = $1", [id]);
-  const customerName = customerRes.rows[0]?.full_name || id;
+  // Obtener datos del cliente
+  const customerRes = await query("SELECT full_name, ai_enabled FROM instagram_customers WHERE id = $1", [id]);
+  const customer = customerRes.rows[0];
+  const customerName = customer?.full_name || id;
 
   const history = await getChatHistory(id);
 
@@ -40,7 +42,10 @@ export default async function InstagramDetailPage({ params }) {
           <ArrowLeft size={16} />
           Volver al monitoreo
         </Link>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800 }}>Chat: {customerName}</h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>Chat: {customerName}</h1>
+          <BotPauseToggle id={id} platform="instagram" initialStatus={customer?.ai_enabled ?? true} />
+        </div>
       </header>
 
       <div className="card glass" style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '2rem', minHeight: '60vh' }}>
