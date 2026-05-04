@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, User, Bot, Clock } from "lucide-react";
 import AutoRefresh from "@/components/Common/AutoRefresh";
 import BotPauseToggle from "@/components/Common/BotPauseToggle";
+import ManualReplyInput from "@/components/Common/ManualReplyInput";
 
 async function getChatHistory(sessionId) {
   try {
@@ -35,7 +36,7 @@ export default async function InstagramDetailPage({ params }) {
   const history = await getChatHistory(id);
 
   return (
-    <div>
+    <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto', height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <AutoRefresh interval={5000} />
       <header style={{ marginBottom: '2rem' }}>
         <Link href="/instagram" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--muted-foreground)', textDecoration: 'none', marginBottom: '1rem' }}>
@@ -48,7 +49,18 @@ export default async function InstagramDetailPage({ params }) {
         </div>
       </header>
 
-      <div className="card glass" style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '2rem', minHeight: '60vh' }}>
+      <div style={{ 
+        flex: 1, 
+        overflowY: 'auto', 
+        padding: '2rem', 
+        background: 'white', 
+        borderRadius: '24px 24px 0 0',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+        border: '1px solid #f0f0f0',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1.5rem'
+      }}>
         {history.length === 0 ? (
           <p style={{ textAlign: 'center', color: 'var(--muted-foreground)' }}>No hay mensajes en esta conversación.</p>
         ) : (
@@ -68,9 +80,9 @@ export default async function InstagramDetailPage({ params }) {
                   marginBottom: '0.25rem',
                   flexDirection: isBot ? 'row' : 'row-reverse'
                 }}>
-                  {isBot ? <Bot size={14} color="var(--primary)" /> : <User size={14} color="var(--secondary)" />}
+                  {isBot ? <Bot size={14} color="#F28705" /> : <User size={14} color="#0477BF" />}
                   <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted-foreground)' }}>
-                    {isBot ? 'AGENTE VIRTUAL' : 'CLIENTE'}
+                    {isBot ? (msg.manual ? 'MANUAL (TÚ)' : 'AGENTE VIRTUAL') : 'CLIENTE'}
                   </span>
                 </div>
                 
@@ -78,8 +90,8 @@ export default async function InstagramDetailPage({ params }) {
                   maxWidth: '85%',
                   padding: '1rem',
                   borderRadius: isBot ? '2px 16px 16px 16px' : '16px 2px 16px 16px',
-                  background: isBot ? 'rgba(4, 119, 191, 0.05)' : 'rgba(242, 135, 5, 0.05)',
-                  border: `1px solid ${isBot ? 'rgba(4, 119, 191, 0.1)' : 'rgba(242, 135, 5, 0.1)'}`,
+                  background: isBot ? 'rgba(242, 135, 5, 0.05)' : 'rgba(4, 119, 191, 0.05)',
+                  border: `1px solid ${isBot ? 'rgba(242, 135, 5, 0.1)' : 'rgba(4, 119, 191, 0.1)'}`,
                   color: 'var(--foreground)',
                   fontSize: '0.9375rem',
                   lineHeight: 1.5,
@@ -96,6 +108,7 @@ export default async function InstagramDetailPage({ params }) {
           })
         )}
       </div>
+      <ManualReplyInput id={id} platform="instagram" />
     </div>
   );
 }

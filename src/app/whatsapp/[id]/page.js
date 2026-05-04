@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChevronLeft, User, Smartphone, Clock } from "lucide-react";
 import AutoRefresh from "@/components/Common/AutoRefresh";
 import BotPauseToggle from "@/components/Common/BotPauseToggle";
+import ManualReplyInput from "@/components/Common/ManualReplyInput";
 
 async function getChatMessages(id) {
   try {
@@ -28,7 +29,7 @@ async function getCustomerInfo(id) {
 }
 
 export default async function WhatsAppChatPage({ params }) {
-  const { id } = await params; // En Next.js 15+ params es una promesa
+  const { id } = await params;
   const messages = await getChatMessages(id);
   const customer = await getCustomerInfo(id);
 
@@ -65,7 +66,7 @@ export default async function WhatsAppChatPage({ params }) {
         overflowY: 'auto', 
         padding: '1.5rem', 
         background: '#f8f9fa', 
-        borderRadius: '24px',
+        borderRadius: '24px 24px 0 0',
         boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.05)',
         display: 'flex',
         flexDirection: 'column',
@@ -122,7 +123,7 @@ export default async function WhatsAppChatPage({ params }) {
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px'
                   }}>
-                    Agente Virtual
+                    {data.manual ? 'Manual (Tú)' : 'Agente Virtual'}
                   </div>
                 )}
               </div>
@@ -130,10 +131,7 @@ export default async function WhatsAppChatPage({ params }) {
           })
         )}
       </div>
-      
-      <footer style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.8rem', color: 'var(--muted-foreground)' }}>
-        Esta conversación es gestionada automáticamente por la IA de Practiiko 💎
-      </footer>
+      <ManualReplyInput id={id} platform="whatsapp" />
     </div>
   );
 }
