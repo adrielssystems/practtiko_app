@@ -73,6 +73,15 @@ async function getDetailedStats() {
 export default async function OverviewPage() {
   const data = await getDetailedStats();
 
+  const cardStyle = {
+    background: 'white',
+    border: '1px solid #f1f5f9',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+    borderRadius: '24px',
+    padding: '1.75rem',
+    transition: 'all 0.3s ease'
+  };
+
   return (
     <div style={{ padding: '0 1rem' }}>
       <AutoRefresh interval={10000} />
@@ -121,7 +130,7 @@ export default async function OverviewPage() {
         marginBottom: '2.5rem'
       }}>
         {/* Metric 1: Products */}
-        <div className="card glass-premium" style={{ position: 'relative', overflow: 'hidden' }}>
+        <div style={cardStyle}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
             <div style={{ padding: '0.75rem', background: '#e0f2fe', color: '#0369a1', borderRadius: '14px' }}>
               <Package size={24} />
@@ -133,7 +142,7 @@ export default async function OverviewPage() {
         </div>
 
         {/* Metric 2: Instagram */}
-        <div className="card glass-premium">
+        <div style={cardStyle}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
             <div style={{ padding: '0.75rem', background: '#fdf2f8', color: '#be185d', borderRadius: '14px' }}>
               <MessageCircle size={24} />
@@ -146,7 +155,7 @@ export default async function OverviewPage() {
         </div>
 
         {/* Metric 3: WhatsApp */}
-        <div className="card glass-premium">
+        <div style={cardStyle}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
             <div style={{ padding: '0.75rem', background: '#f0fdf4', color: '#15803d', borderRadius: '14px' }}>
               <Smartphone size={24} />
@@ -159,7 +168,7 @@ export default async function OverviewPage() {
         </div>
 
         {/* Metric 4: Customers */}
-        <div className="card glass-premium">
+        <div style={cardStyle}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
             <div style={{ padding: '0.75rem', background: '#fff7ed', color: '#c2410c', borderRadius: '14px' }}>
               <TrendingUp size={24} />
@@ -183,7 +192,7 @@ export default async function OverviewPage() {
 
           <div style={{ display: 'grid', gap: '1rem' }}>
             {/* WhatsApp Activity */}
-            <div className="card glass" style={{ padding: '1.5rem' }}>
+            <div style={{ ...cardStyle, borderRadius: '20px', padding: '1.5rem' }}>
               <h4 style={{ fontSize: '0.8rem', fontWeight: 800, color: '#128C7E', textTransform: 'uppercase', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <MessageSquare size={16} /> Recientes WhatsApp
               </h4>
@@ -206,7 +215,7 @@ export default async function OverviewPage() {
             </div>
 
             {/* Instagram Activity */}
-            <div className="card glass" style={{ padding: '1.5rem' }}>
+            <div style={{ ...cardStyle, borderRadius: '20px', padding: '1.5rem' }}>
               <h4 style={{ fontSize: '0.8rem', fontWeight: 800, color: '#be185d', textTransform: 'uppercase', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <MessageCircle size={16} /> Recientes Instagram
               </h4>
@@ -232,7 +241,7 @@ export default async function OverviewPage() {
 
         {/* RIGHT COLUMN: QUICK ACTIONS & HEALTH */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div className="card glass-premium" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: 'white', border: 'none' }}>
+          <div style={{ ...cardStyle, background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: 'white', border: 'none' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Plus size={20} color="#38bdf8" /> Acciones Rápidas
             </h3>
@@ -280,7 +289,7 @@ export default async function OverviewPage() {
             </div>
           </div>
 
-          <div className="card glass" style={{ border: '1px solid #e2e8f0' }}>
+          <div style={{ ...cardStyle, borderRadius: '20px', border: '1px solid #e2e8f0' }}>
             <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <ShieldCheck size={18} color="#10b981" /> Seguridad y Sistema
             </h3>
@@ -301,24 +310,6 @@ export default async function OverviewPage() {
           </div>
         </section>
       </div>
-
-      <style jsx>{`
-        .glass-premium {
-          background: white;
-          border: 1px solid #f1f5f9;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.04);
-          border-radius: 24px;
-          padding: 1.75rem;
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .glass-premium:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 12px 30px rgba(0,0,0,0.08);
-        }
-        .card {
-          border-radius: 20px;
-        }
-      `}</style>
     </div>
   );
 }
