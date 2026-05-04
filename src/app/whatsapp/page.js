@@ -70,10 +70,9 @@ export default async function WhatsAppPage() {
                 background: 'white',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
                 border: '1px solid #f0f0f0',
-                position: 'relative'
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <Link href={`/whatsapp/${conv.session_id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, overflow: 'hidden' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '1rem', alignItems: 'flex-start' }}>
+                  <Link href={`/whatsapp/${conv.session_id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '1rem', overflow: 'hidden' }}>
                     <div style={{ 
                       width: '48px', 
                       height: '48px', 
@@ -102,39 +101,38 @@ export default async function WhatsAppPage() {
                       <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem' }}>
                         <Clock size={12} /> {conv.last_message_fmt}
                       </div>
-                      {conv.last_text && (
-                        <div style={{ 
-                          fontSize: '0.72rem', 
-                          color: 'var(--muted-foreground)', 
-                          marginTop: '0.15rem',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          maxWidth: '160px',
-                          opacity: 0.8
-                        }}>
-                          {conv.last_text}
-                        </div>
-                      )}
                     </div>
                   </Link>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem', flexShrink: 0, position: 'relative', zIndex: 10 }}>
-                    <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
+                  <div 
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    style={{ 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      alignItems: 'flex-end', 
+                      gap: '0.5rem', 
+                      flexShrink: 0, 
+                      position: 'relative', 
+                      zIndex: 999 
+                    }}
+                  >
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                       <BotPauseToggle id={conv.session_id} platform="whatsapp" initialStatus={conv.ai_enabled ?? true} />
                       <DeleteChatButton sessionId={conv.session_id} platform="whatsapp" />
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
                       <div style={{ 
                         background: 'rgba(37, 211, 102, 0.1)', 
                         color: '#128C7E', 
-                        padding: '0.25rem 0.6rem', 
-                        borderRadius: '8px', 
-                        fontSize: '0.7rem', 
+                        padding: '0.2rem 0.5rem', 
+                        borderRadius: '6px', 
+                        fontSize: '0.65rem', 
                         fontWeight: 800
                       }}>
                         {conv.total_messages} MSG
                       </div>
+                      <span style={{ fontSize: '0.6rem', background: '#25D366', color: 'white', padding: '2px 8px', borderRadius: '6px', fontWeight: 800, textTransform: 'uppercase' }}>WhatsApp</span>
                     </div>
-                    <span style={{ fontSize: '0.6rem', background: '#25D366', color: 'white', padding: '2px 8px', borderRadius: '6px', fontWeight: 800, textTransform: 'uppercase' }}>WhatsApp</span>
                   </div>
                 </div>
                 

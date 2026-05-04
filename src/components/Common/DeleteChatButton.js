@@ -14,13 +14,16 @@ export default function DeleteChatButton({ sessionId, platform = 'instagram' }) 
     e.preventDefault(); 
     e.stopPropagation();
 
-    if (!window.confirm("¿Estás seguro de que quieres borrar esta conversación? Esta acción no se puede deshacer.")) {
+    console.log("[DEBUG] Click en eliminar para sesión:", sessionId);
+    
+    if (!window.confirm(`¿Estás seguro de que quieres borrar la conversación de ${sessionId}?`)) {
       return;
     }
 
     setIsDeleting(true);
 
     try {
+      console.log("[DEBUG] Llamando a API de borrado...");
       const endpoint = platform === 'whatsapp' ? "/api/whatsapp/delete-chat" : "/api/instagram/delete-chat";
       
       const res = await fetch(endpoint, {
