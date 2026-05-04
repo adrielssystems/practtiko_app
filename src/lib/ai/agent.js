@@ -1,5 +1,5 @@
 import { ChatOpenAI } from "@langchain/openai";
-import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { query } from "../db.js";
 
 const model = new ChatOpenAI({
@@ -10,96 +10,99 @@ const model = new ChatOpenAI({
 });
 
 /**
- * PASO 1: EXTRAER TÉRMINO DE BÚSQUEDA
+ * DETECTA INTENCIÓN POR REGLAS (DETERMINÍSTICO)
  */
-async function getSearchTerm(message, history) {
-  const prompt = `Extrae el término de búsqueda (modelo, código o tipo de mueble) del mensaje del cliente. 
-  Si no hay una intención de búsqueda clara, responde "NONE".
-  Mensaje: "${message}"
-  Respuesta (Solo el término o NONE):`;
-  
-  const res = await model.invoke([new HumanMessage(prompt)]);
-  const term = res.content.trim().toUpperCase();
-  return term === "NONE" ? null : term;
+function detectIntent(message) {
+  const m = message.toLowerCase();
+  if (m.includes("hola") || m.includes("buen") || m.includes("saludo")) return "GREETING";
+  if (m.includes("catalogo") || m.includes("que tiene") || m.includes("ver todo") || m.includes("disponibl")) return "CATALOG";
+  if (m.includes("precio") || m.includes("costo") || m.includes("cuanto") || m.includes("envio") || m.includes("margarita")) return "PRICE_INFO";
+  return "PRODUCT_QUERY";
 }
 
 /**
- * PASO 2: CONSULTAR DB (DETERMINÍSTICO)
+ * EXTRAE KEYWORD POR REGLAS (DETERMINÍSTICO)
  */
-async function searchInventory(term) {
-  if (!term) return { found: false, products: [] };
-  
-  let t = term.toLowerCase();
-  if (t.includes('clochon')) t = t.replace('clochon', 'colchon');
-  if (t.includes('soffa')) t = t.replace('soffa', 'sofa');
-  
-  let clean = t;
-  if (clean.endsWith('es')) clean = clean.slice(0, -2);
-  else if (clean.endsWith('s')) clean = clean.slice(0, -1);
+function extractKeywordRuleBased(message) {
+  const m = message.toLowerCase();
+  const keywords = [
+    'colchon', 'sofa', 'mueble', 'cama', 'individual', 'matrimonial', 'queen',
+    'd001', 'd006', 'd007', 's001', 's005', 's012', 'c002', 'c003',
+    'caterpilar', 'tofu', 'burbuja', 'mama', 'merey', 'nube', 'lemmy', 'tumbona'
+  ];
 
+  for (const k of keywords) {
+    if (m.includes(k)) return k;
+  }
+  return null;
+}
+
+/**
+ * BUSCA EN DB (DETERMINÍSTICO)
+ */
+async function getInventoryData(term, intent) {
   try {
-    const res = await query(
-      `SELECT p.name, p.description, p.code, p.price_bcv, p.price_cash, c.name as categoria
-       FROM products p
-       LEFT JOIN categories c ON p.category_id = c.id
-       WHERE (p.name ILIKE $1 OR p.description ILIKE $1 OR p.code ILIKE $1 OR c.name ILIKE $1 OR p.name ILIKE $2 OR c.name ILIKE $2)
-       AND p.status = 'active' LIMIT 5`,
-      [`%${t}%`, `%${clean}%`]
-    );
-    
-    return {
-      found: res.rows.length > 0,
-      products: res.rows
-    };
+    let sql = "";
+    let params = [];
+
+    if (intent === "CATALOG" || (intent === "PRODUCT_QUERY" && !term)) {
+      sql = `SELECT p.name, p.code, p.price_bcv, p.price_cash, c.name as categoria 
+             FROM products p LEFT JOIN categories c ON p.category_id = c.id 
+             WHERE p.status = 'active' ORDER BY p.id ASC LIMIT 6`;
+    } else if (term) {
+      let t = term.toLowerCase();
+      if (t.includes('clochon')) t = t.replace('clochon', 'colchon');
+      sql = `SELECT p.name, p.code, p.price_bcv, p.price_cash, c.name as categoria 
+             FROM products p LEFT JOIN categories c ON p.category_id = c.id 
+             WHERE (p.name ILIKE $1 OR p.description ILIKE $1 OR p.code ILIKE $1 OR c.name ILIKE $1)
+             AND p.status = 'active' LIMIT 8`;
+      params = [`%${t}%`];
+    } else {
+      return { found: false, list: "" };
+    }
+
+    const res = await query(sql, params);
+    if (res.rows.length === 0) return { found: false, list: "" };
+
+    const list = res.rows.map(p => `
+💎 ${p.name}
+Código: ${p.code}
+Precio BCV: $${p.price_bcv}
+Precio CASH: $${p.price_cash} 💎
+`).join("\n");
+
+    return { found: true, list };
   } catch (e) {
     console.error("[DB ERROR]", e);
-    return { error: true, products: [] };
+    return { error: true, list: "" };
   }
 }
 
-/**
- * PASO 3: GENERAR RESPUESTA FINAL
- */
 const SYSTEM_PROMPT = `
 IDENTIDAD: Eres el Agente Virtual de Practiiko 💎. Solo informas sobre el inventario REAL.
 
-REGLAS DE ORO (INCUMPPLIBLES):
-1. SOLO puedes hablar de los productos que se te entregan en la sección "INVENTARIO ACTUAL".
-2. Si "INVENTARIO ACTUAL" está vacío o no coincide con lo que pide el cliente, responde: "Actualmente no ubico ese modelo exacto en mi inventario, pero te invito a ver nuestro catálogo completo: www.bit.ly/CatalogoPractiiko".
-3. PROHIBIDO INVENTAR: No inventes nombres, códigos (D001, etc) ni precios.
-4. BREVEDAD: Máximo 2 párrafos.
-5. PRECIOS: Si el cliente es de Margarita, da el precio BCV y el precio CASH (más bajo). Si es Nacional, NO des precios, envíalo a WhatsApp: 0424-8948664.
-6. UBICACIÓN: Tienda física en C.C. Terranova Plaza, Local A-14, Porlamar.
+RESTRICCIÓN ABSOLUTA:
+1. SOLO puedes hablar de los productos que aparecen abajo en la sección "PRODUCTOS DISPONIBLES".
+2. Si un producto NO está en esa lista, di que no lo tienes y ofrece ver el catálogo: www.bit.ly/CatalogoPractiiko.
+3. NO INVENTES NADA. Si falta un precio o descripción, no lo deduzcas.
+4. Si el cliente pregunta de dónde eres: Tienda física en C.C. Terranova Plaza, Local A-14, Porlamar, Margarita.
+5. Si es de fuera de Margarita (Nacional): PROHIBIDO dar precios. Dile que un asesor cotizará por WhatsApp: 0424-8948664.
 
-INVENTARIO ACTUAL:
-{inventory_data}
+PRODUCTOS DISPONIBLES (DATO REAL DE LA DB):
+{inventory_list}
 
-INFO CLIENTE:
-Nombre: {customer_name}
-Plataforma: {platform}
+CONTEXTO:
+Cliente: {customer_name} | Plataforma: {platform}
 `;
 
 export async function processChatMessage(message, sessionId, source = 'dm', commentId = null, customerName = 'Cliente') {
   try {
-    // 1. Sanitizar historial (Solo mensajes del usuario para evitar auto-contaminación)
-    const tableName = source === 'whatsapp' ? 'whatsapp_messages' : 'instagram_messages';
-    const historyRes = await query(
-      `SELECT message FROM ${tableName} WHERE session_id = $1 AND (message::json->>'role') = 'user' ORDER BY created_at DESC LIMIT 3`,
-      [sessionId]
-    );
-    const userHistory = historyRes.rows.map(r => (typeof r.message === 'string' ? JSON.parse(r.message) : r.message).content).join(" | ");
-
-    // 2. Extraer intención y Buscar en DB
-    const term = await getSearchTerm(message, userHistory);
-    const dbResult = await searchInventory(term);
-
-    // 3. Generar respuesta con el LLM como formateador
-    const inventoryString = dbResult.found 
-      ? JSON.stringify(dbResult.products, null, 2)
-      : "NO HAY PRODUCTOS ENCONTRADOS.";
+    const intent = detectIntent(message);
+    const term = extractKeywordRuleBased(message);
+    const inventory = await getInventoryData(term, intent);
 
     const finalPrompt = SYSTEM_PROMPT
-      .replace("{inventory_data}", inventoryString)
+      .replace("{inventory_list}", inventory.found ? inventory.list : "NO HAY PRODUCTOS COINCIDENTES EN ESTE MOMENTO.")
       .replace("{customer_name}", customerName)
       .replace("{platform}", source.toUpperCase());
 
@@ -108,9 +111,9 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
       new HumanMessage(message)
     ]);
 
-    const aiResponse = response.content;
+    let aiResponse = response.content;
 
-    // 4. Guardar respuesta
+    // Guardado de mensajes
     if (source === 'whatsapp') {
       await query(`INSERT INTO whatsapp_messages (session_id, message) VALUES ($1, $2)`, [sessionId, JSON.stringify({ role: 'assistant', content: aiResponse })]);
     } else {
@@ -121,6 +124,6 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
 
   } catch (error) {
     console.error("[PIPELINE FATAL ERROR]:", error);
-    return "Hola! Un gusto saludarte. Tenemos los mejores sofás y colchones importados para ti. ¿Qué modelo buscas? Puedes ver nuestro catálogo aquí: www.bit.ly/CatalogoPractiiko 💎";
+    return "¡Hola! 💎 Somos Practiiko. Tenemos los mejores sofás y colchones importados. Puedes ver disponibilidad y precios reales aquí: www.bit.ly/CatalogoPractiiko";
   }
 }
