@@ -5,8 +5,7 @@ import { MessageSquare, MessageCircle, Clock, User, ChevronRight, Settings, Acti
 import BotSimulator from "@/components/Instagram/BotSimulator";
 import AutoRefresh from "@/components/Common/AutoRefresh";
 
-// Componente del botón de borrar para manejar el estado del lado del cliente
-import DeleteChatButton from "@/components/Instagram/DeleteChatButton";
+import DeleteChatButton from "@/components/Common/DeleteChatButton";
 import BotPauseToggle from "@/components/Common/BotPauseToggle";
 
 async function getConversations() {

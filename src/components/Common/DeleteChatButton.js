@@ -3,13 +3,15 @@
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/Toast";
 
-export default function DeleteChatButton({ sessionId }) {
+export default function DeleteChatButton({ sessionId, platform = 'instagram' }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
+  const { addToast } = useToast();
 
   const handleDelete = async (e) => {
-    e.preventDefault(); // Evitar que el Link del padre se active
+    e.preventDefault(); 
     e.stopPropagation();
 
     if (!confirm("¿Estás seguro de que quieres borrar esta conversación? Esta acción no se puede deshacer.")) {
@@ -19,19 +21,22 @@ export default function DeleteChatButton({ sessionId }) {
     setIsDeleting(true);
 
     try {
-      const res = await fetch("/api/instagram/delete-chat", {
+      const endpoint = platform === 'whatsapp' ? "/api/whatsapp/delete-chat" : "/api/instagram/delete-chat";
+      
+      const res = await fetch(endpoint, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId }),
       });
 
       if (res.ok) {
-        router.refresh(); // Refrescar la lista de conversaciones
+        addToast("Conversación eliminada con éxito", "success");
+        router.refresh(); 
       } else {
-        alert("Error al borrar la conversación");
+        addToast("Error al borrar la conversación", "error");
       }
     } catch (error) {
-      alert("Error de conexión");
+      addToast("Error de conexión", "error");
     } finally {
       setIsDeleting(false);
     }

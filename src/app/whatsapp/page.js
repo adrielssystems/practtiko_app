@@ -2,7 +2,7 @@ import { query } from "@/lib/db";
 export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { MessageSquare, Clock, User, ChevronRight, Settings, Activity, Trash2, Smartphone } from "lucide-react";
-import DeleteChatButton from "@/components/Instagram/DeleteChatButton"; // Reutilizamos el botón de borrar
+import DeleteChatButton from "@/components/Common/DeleteChatButton";
 import AutoRefresh from "@/components/Common/AutoRefresh";
 import BotPauseToggle from "@/components/Common/BotPauseToggle";
 
@@ -122,7 +122,7 @@ export default async function WhatsAppPage() {
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem', flexShrink: 0 }}>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                       <BotPauseToggle id={conv.session_id} platform="whatsapp" initialStatus={conv.ai_enabled ?? true} />
-                      <DeleteChatButton sessionId={conv.session_id} />
+                      <DeleteChatButton sessionId={conv.session_id} platform="whatsapp" />
                       <div style={{ 
                         background: 'rgba(37, 211, 102, 0.1)', 
                         color: '#128C7E', 
