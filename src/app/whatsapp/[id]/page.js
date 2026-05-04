@@ -9,7 +9,7 @@ import ManualReplyInput from "@/components/Common/ManualReplyInput";
 async function getChatMessages(id) {
   try {
     const res = await query(
-      "SELECT message, created_at, to_char(created_at AT TIME ZONE 'America/Caracas', 'HH12:MI AM') as time_fmt FROM whatsapp_messages WHERE session_id = $1 ORDER BY created_at ASC",
+      "SELECT message, created_at, to_char(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Caracas', 'HH12:MI AM') as time_fmt FROM whatsapp_messages WHERE session_id = $1 ORDER BY created_at ASC",
       [id]
     );
     return res.rows;
