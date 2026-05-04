@@ -3,7 +3,7 @@ import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { query } from "@/lib/db";
 
 const model = new ChatGoogleGenerativeAI({
-  apiKey: process.env.GOOGLE_API_KEY,
+  apiKey: process.env.GOOGLE_API_KEY || "dummy_key_for_build",
   modelName: "gemini-1.5-flash",
   maxOutputTokens: 512,
   temperature: 0,

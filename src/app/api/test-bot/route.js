@@ -1,6 +1,8 @@
 import { processChatMessage } from "@/lib/ai/agent";
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req) {
   try {
     const { message, sessionId, customerName } = await req.json();
