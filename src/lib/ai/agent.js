@@ -18,8 +18,8 @@ function getModel() {
     _model = new ChatOpenAI({
       openAIApiKey: apiKey,
       configuration: { baseURL: baseUrl },
-      modelName: "deepseek-chat",
-      temperature: 0.1,
+      modelName: "deepseek-v4-flash",
+      temperature: 0.3,
     });
   }
   return _model;
