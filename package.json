@@ -11,6 +11,7 @@
   "dependencies": {
     "@langchain/community": "^1.1.27",
     "@langchain/core": "^1.1.44",
+    "@langchain/google-genai": "^2.1.30",
     "@langchain/openai": "^0.0.28",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",

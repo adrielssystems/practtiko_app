@@ -1,11 +1,11 @@
-import { ChatOpenAI } from "@langchain/openai";
-import { HumanMessage } from "@langchain/core/messages";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { query } from "@/lib/db";
 
-const model = new ChatOpenAI({
-  openAIApiKey: process.env.DEEPSEEK_API_KEY || "dummy_key_for_build_only",
-  configuration: { baseURL: process.env.DEEPSEEK_API_URL || "https://api.deepseek.com" },
-  modelName: "deepseek-chat",
+const model = new ChatGoogleGenerativeAI({
+  apiKey: process.env.GOOGLE_API_KEY,
+  modelName: "gemini-1.5-flash",
+  maxOutputTokens: 512,
   temperature: 0,
 });
 
@@ -117,23 +117,39 @@ ${showPrices
 }
 
 /**
- * RESPUESTA FINAL (LLM SOLO PARA ENVOLTURA)
+ * RESPUESTA FINAL (LLM CON GEMINI)
  */
 async function buildResponse(message, customerName, inventory, location) {
+  const isMargarita = location === "MARGARITA";
+  
+  const prompt = `
+IDENTIDAD: Eres el Agente Virtual de Practiiko 💎. Tu misión es presentar productos de forma profesional y amable.
 
-  const baseText = inventory.text;
+REGLAS:
+1. Usa el inventario proporcionado abajo. No inventes productos.
+2. UBICACIÓN: El cliente está en ${isMargarita ? "MARGARITA (Isla)" : "VENTA NACIONAL (Tierra Firme)"}.
+3. Si es MARGARITA, destaca el envío gratis. Si es NACIONAL, indica que los envíos se cotizan por WhatsApp (0424-8948664).
+4. Si FALLBACK es TRUE, di: "No tengo ese modelo exacto, pero mira estas opciones:".
+5. CIERRE: Siempre invita a ver más en www.bit.ly/CatalogoPractiiko
 
-  const prefix = inventory.isFallback
-    ? "Actualmente no tengo ese modelo exacto, pero mira estas opciones:\n\n"
-    : "";
+INVENTARIO:
+${inventory.text}
 
-  const locationText = location === "MARGARITA"
-    ? "\n🚚 Envío gratis en Margarita."
-    : "\n📦 Envíos nacionales por WhatsApp: 0424-8948664.";
+FALLBACK: ${inventory.isFallback ? "TRUE" : "FALSE"}
+`;
 
-  const final = `${prefix}${baseText}\n${locationText}\n\n📸 Ver más: www.bit.ly/CatalogoPractiiko`;
-
-  return final;
+  try {
+    const response = await model.invoke([
+      new SystemMessage(prompt),
+      new HumanMessage(message)
+    ]);
+    return response.content;
+  } catch (error) {
+    console.error("Gemini Error:", error);
+    // Fallback manual si falla la API
+    const locationText = isMargarita ? "\n🚚 Envío gratis en Margarita." : "\n📦 Envíos nacionales: 0424-8948664.";
+    return `${inventory.text}\n${locationText}\n\n📸 Ver más: www.bit.ly/CatalogoPractiiko`;
+  }
 }
 
 /**
