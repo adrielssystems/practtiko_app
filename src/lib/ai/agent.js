@@ -14,6 +14,7 @@ const model = new ChatOpenAI({
  */
 function detectIntent(message) {
   const m = message.toLowerCase();
+  if (m.includes("gracias") || m.includes("ok") || m.includes("dale") || m.includes("perfecto") || m.includes("entendido")) return "OTHER";
   if (m.includes("precio") || m.includes("costo") || m.includes("cuanto") || m.includes("envio")) return "PRICE_INFO";
   if (m.includes("catalogo") || m.includes("que tiene") || m.includes("ver todo") || m.includes("disponibl")) return "CATALOG";
   if (m.includes("colchon") || m.includes("sofa") || m.includes("cama") || m.includes("mueble") || m.match(/[a-z]\d{3}/)) return "PRODUCT_QUERY";
@@ -27,7 +28,6 @@ function detectIntent(message) {
 function extractKeywordRuleBased(message) {
   const m = message.toLowerCase();
   
-  // Extraer códigos dinámicos primero (ej: d001, s012)
   const codeMatch = m.match(/[a-z]\d{3}/);
   if (codeMatch) return codeMatch[0];
 
@@ -43,20 +43,20 @@ function extractKeywordRuleBased(message) {
 }
 
 /**
- * 3. DETECTA UBICACIÓN BÁSICA PARA EVITAR ADIVINANZAS DEL LLM
+ * 3. DETECTA UBICACIÓN BÁSICA
  */
 function detectLocation(message, history) {
   const text = (history + " " + message).toLowerCase();
-  if (text.includes("margarita") || text.includes("porlamar") || text.includes("pampatar") || text.includes("la isla")) {
+  if (text.includes("margarita") || text.includes("porlamar") || text.includes("pampatar") || text.includes("la isla") || text.includes("juan griego")) {
     return "MARGARITA";
   }
   return "UNKNOWN";
 }
 
 /**
- * 4. BUSCA EN DB CON FALLBACK COMERCIAL INTELIGENTE
+ * 4. BUSCA EN DB CON FALLBACK COMERCIAL POR CATEGORÍA Y OCULTACIÓN DE PRECIOS
  */
-async function getInventoryData(term, intent) {
+async function getInventoryData(term, intent, location) {
   try {
     let isFallback = false;
     let rows = [];
@@ -70,7 +70,7 @@ async function getInventoryData(term, intent) {
       rows = await fetchCatalog();
     } else if (term) {
       let t = term.toLowerCase();
-      if (t.includes('clochon')) t = t.replace('clochon', 'colchon'); // Typos comunes
+      if (t.includes('clochon')) t = t.replace('clochon', 'colchon');
       
       const res = await query(
         `SELECT p.name, p.code, p.price_bcv, p.price_cash, c.name as categoria 
@@ -81,20 +81,31 @@ async function getInventoryData(term, intent) {
       );
       rows = res.rows;
 
-      // 🔥 FALLBACK COMERCIAL: No pierdas la venta si no hay match
+      // 🔥 FALLBACK INTELIGENTE POR CATEGORÍA
       if (rows.length === 0 && intent === "PRODUCT_QUERY") {
-        rows = await fetchCatalog();
+        if (t.includes("colchon")) {
+          const fbRes = await query(`SELECT p.name, p.code, p.price_bcv, p.price_cash, c.name as categoria FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE c.name ILIKE '%colchon%' AND p.status = 'active' LIMIT 5`);
+          rows = fbRes.rows;
+        } else if (t.includes("sofa") || t.includes("mueble")) {
+          const fbRes = await query(`SELECT p.name, p.code, p.price_bcv, p.price_cash, c.name as categoria FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE c.name ILIKE '%sofa%' AND p.status = 'active' LIMIT 5`);
+          rows = fbRes.rows;
+        }
+        
+        if (rows.length === 0) {
+          rows = await fetchCatalog();
+        }
         isFallback = true;
       }
     }
 
     if (rows.length === 0) return { found: false, list: "", isFallback: false };
 
-    // 🧱 FORMATEO HÍBRIDO ESTRICTO: El LLM no puede reescribir esto
+    // 🧱 FORMATEO HÍBRIDO ESTRICTO CON PROTECCIÓN DE PRECIOS
+    const showPrices = location === "MARGARITA";
     const list = rows.map(p => `
 💎 *${p.name}* (Código: ${p.code})
-Precio BCV: $${p.price_bcv}
-Precio CASH: $${p.price_cash} 💎`).join("\n");
+${showPrices ? `Precio BCV: $${p.price_bcv}\nPrecio CASH: $${p.price_cash} 💎` : `Venta Nacional: Consulta disponibilidad y envío por WhatsApp: 0424-8948664 💎`}
+`).join("\n");
 
     return { found: true, list, isFallback };
   } catch (e) {
@@ -104,29 +115,40 @@ Precio CASH: $${p.price_cash} 💎`).join("\n");
 }
 
 /**
- * 5. PROMPT BLINDADO CON RESTRICCIONES ABSOLUTAS
+ * 5. PROMPT BLINDADO CON DELIMITADORES
  */
 const SYSTEM_PROMPT = `
-IDENTIDAD: Eres el Agente Virtual de Practiiko 💎. Tu única misión es presentar el catálogo de productos y guiar la venta.
+IDENTIDAD: Eres el Agente Virtual de Practiiko 💎. Tu única misión es saludar y presentar el bloque de texto exactamente como se te entrega.
 
-RESTRICCIONES ABSOLUTAS (PROHIBIDO ROMPERLAS):
-1. PROHIBIDO alterar, deducir o inventar información de los productos.
-2. PROHIBIDO usar adjetivos calificativos ("cómodo", "premium", "ortopédico", "económico") a menos que formen parte del nombre exacto del producto.
-3. SOLO puedes mostrar los productos de la sección "PRODUCTOS A MOSTRAR". Pégalos textualmente.
-4. UBICACIÓN DETECTADA: {detected_location}. 
-   - Si es MARGARITA: Ofrece el envío gratis y destaca el precio CASH.
-   - Si es UNKNOWN: No ofrezcas envío gratis todavía. Indica que los envíos nacionales son por Tealca y da el WhatsApp 0424-8948664.
-5. FALLBACK ACTIVADO: {is_fallback}. 
-   - Si es TRUE: Significa que no tenemos el modelo exacto que pidió el cliente. Debes decirle cordialmente: "Actualmente no tengo ese modelo exacto, pero te comparto estas excelentes opciones disponibles:" y muestras la lista.
-6. CIERRE OBLIGATORIO: Siempre invita a ver más fotos en: www.bit.ly/CatalogoPractiiko
+REGLAS INCUMPLIBLES (SI ROMPES ESTO, EL SISTEMA FALLARÁ):
+1. Debes copiar EXACTAMENTE el texto contenido entre <<<START>>> y <<<END>>> sin modificar absolutamente nada. No alteres iconos, saltos de línea ni palabras.
+2. PROHIBIDO usar adjetivos calificativos ("cómodo", "premium", "económico") a menos que formen parte del nombre exacto del producto.
+3. UBICACIÓN DETECTADA: {detected_location}. Si es MARGARITA, destaca el envío gratis local. Si es UNKNOWN, recuerda que los envíos nacionales se cotizan por WhatsApp (0424-8948664).
+4. FALLBACK ACTIVADO: {is_fallback}. Si es TRUE, el modelo exacto que pidieron no está. Di cordialmente: "Actualmente no tengo ese modelo exacto, pero te comparto estas excelentes opciones de nuestra colección:" y luego pega el texto de los delimitadores.
+5. CIERRE: Siempre invita a ver más fotos en: www.bit.ly/CatalogoPractiiko
 
 PRODUCTOS A MOSTRAR:
+<<<START>>>
 {inventory_list}
+<<<END>>>
 `;
 
 export async function processChatMessage(message, sessionId, source = 'dm', commentId = null, customerName = 'Cliente') {
   try {
-    // Sanitizar historial: Solo leemos al usuario
+    const intent = detectIntent(message);
+
+    // 🛑 SHORT-CIRCUIT: Mensajes sin intención comercial (gracias, ok)
+    if (intent === "OTHER") {
+      const aiResponse = "¡Con gusto, " + customerName + "! 💎 Si deseas ver modelos disponibles o consultar precios, dime qué buscas (ej. 'sofás' o 'colchones') y te ayudo enseguida. También puedes ver todo aquí: www.bit.ly/CatalogoPractiiko";
+      if (source === 'whatsapp') {
+        await query(`INSERT INTO whatsapp_messages (session_id, message) VALUES ($1, $2)`, [sessionId, JSON.stringify({ role: 'assistant', content: aiResponse })]);
+      } else {
+        await query(`INSERT INTO instagram_messages (session_id, message, source, comment_id) VALUES ($1, $2, $3, $4)`, [sessionId, JSON.stringify({ role: 'assistant', content: aiResponse }), source, commentId]);
+      }
+      return aiResponse;
+    }
+
+    // Sanitizar historial
     const tableName = source === 'whatsapp' ? 'whatsapp_messages' : 'instagram_messages';
     const historyRes = await query(
       `SELECT message FROM ${tableName} WHERE session_id = $1 AND (message::json->>'role') = 'user' ORDER BY created_at DESC LIMIT 3`,
@@ -135,10 +157,9 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
     const userHistory = historyRes.rows.map(r => (typeof r.message === 'string' ? JSON.parse(r.message) : r.message).content).join(" | ");
 
     // Pipeline Determinístico
-    const intent = detectIntent(message);
     const term = extractKeywordRuleBased(message);
     const location = detectLocation(message, userHistory);
-    const inventory = await getInventoryData(term, intent);
+    const inventory = await getInventoryData(term, intent, location);
 
     const finalPrompt = SYSTEM_PROMPT
       .replace("{inventory_list}", inventory.found ? inventory.list : "NO HAY PRODUCTOS PARA MOSTRAR.")
