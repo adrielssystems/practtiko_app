@@ -5,7 +5,10 @@ import { Save, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import MediaUpload from "./MediaUpload";
 
+import { useToast } from "@/components/Toast";
+
 export default function ProductForm({ categories, onSubmitAction, initialData = {} }) {
+  const { addToast } = useToast();
   const [media, setMedia] = useState({ 
     images: initialData.images || [], 
     video: initialData.video_url || null 
@@ -21,15 +24,15 @@ export default function ProductForm({ categories, onSubmitAction, initialData = 
     setIsSaving(true);
 
     const formData = new FormData(e.target);
-    
-    // Añadimos los datos de medios al FormData
     formData.append("images", JSON.stringify(media.images));
     formData.append("video_url", media.video || "");
 
     try {
       await onSubmitAction(formData);
+      addToast(initialData.id ? "Cambios guardados con éxito" : "Producto creado con éxito", "success");
     } catch (error) {
       console.error("Error saving product:", error);
+      addToast("Error al guardar el producto", "error");
       setIsSaving(false);
     }
   };
@@ -91,11 +94,49 @@ export default function ProductForm({ categories, onSubmitAction, initialData = 
         <MediaUpload onMediaChange={handleMediaChange} initialMedia={{ images: media.images, video: media.video }} />
       </div>
 
-      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
-        <Link href="/products" className="btn-outline">Cancelar</Link>
-        <button type="submit" disabled={isSaving} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', alignItems: 'center', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
+        <Link 
+          href="/products" 
+          className="btn-outline" 
+          style={{ 
+            padding: '0.75rem 1.5rem', 
+            borderRadius: '12px', 
+            fontSize: '0.9rem', 
+            fontWeight: 700, 
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#64748b',
+            border: '1px solid #e2e8f0',
+            background: 'white',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => { e.target.style.background = '#f8fafc'; e.target.style.borderColor = '#cbd5e1'; }}
+          onMouseLeave={(e) => { e.target.style.background = 'white'; e.target.style.borderColor = '#e2e8f0'; }}
+        >
+          Cancelar
+        </Link>
+        <button 
+          type="submit" 
+          disabled={isSaving} 
+          className="btn-primary" 
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.5rem',
+            padding: '0.75rem 1.5rem',
+            borderRadius: '12px',
+            fontWeight: 700,
+            fontSize: '0.9rem',
+            boxShadow: '0 4px 12px rgba(4, 119, 191, 0.25)'
+          }}
+        >
           {isSaving ? (
-            "Guardando..."
+            <>
+              <Save className="animate-spin" size={18} />
+              Guardando...
+            </>
           ) : (
             <>
               <Save size={18} />

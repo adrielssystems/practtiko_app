@@ -3,12 +3,13 @@
 import { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { X, Upload, Film, Loader2, AlertCircle } from "lucide-react";
+import { useToast } from "@/components/Toast";
 
 export default function MediaUpload({ onMediaChange, initialMedia = { images: [], video: null } }) {
+  const { addToast } = useToast();
   const [images, setImages] = useState(initialMedia.images || []);
   const [video, setVideo] = useState(initialMedia.video || null);
   const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState(null);
 
   // Sincronizar con el padre cada vez que cambie algo localmente
   useEffect(() => {
@@ -17,18 +18,17 @@ export default function MediaUpload({ onMediaChange, initialMedia = { images: []
 
   const onDrop = useCallback(async (acceptedFiles) => {
     setIsUploading(true);
-    setError(null);
     
     for (const file of acceptedFiles) {
       const isVideo = file.type.startsWith('video/');
       
-      // Validaciones locales
+      // Validaciones locales con Toast
       if (isVideo && video) {
-        setError("Solo se permite un video por producto.");
+        addToast("Solo se permite un video por producto.", "error");
         continue;
       }
       if (!isVideo && images.length >= 5) {
-        setError("Máximo 5 imágenes permitidas.");
+        addToast("Máximo 5 imágenes permitidas.", "error");
         continue;
       }
 
@@ -49,18 +49,20 @@ export default function MediaUpload({ onMediaChange, initialMedia = { images: []
         if (data.url) {
           if (isVideo) {
             setVideo(data.url);
+            addToast("Video subido con éxito", "success");
           } else {
             setImages(prev => [...prev, data.url]);
+            addToast("Imagen optimizada y subida", "success");
           }
         }
       } catch (err) {
         console.error("Upload error:", err);
-        setError("Error al subir archivo. Verifica tu conexión.");
+        addToast("Error al subir archivo. Verifica tu conexión.", "error");
       }
     }
     
     setIsUploading(false);
-  }, [images, video]);
+  }, [images, video, addToast]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
     onDrop,
@@ -73,22 +75,17 @@ export default function MediaUpload({ onMediaChange, initialMedia = { images: []
 
   const removeImage = (index) => {
     setImages(prev => prev.filter((_, i) => i !== index));
+    addToast("Imagen eliminada", "success");
   };
 
   const removeVideo = () => {
     setVideo(null);
+    addToast("Video eliminado", "success");
   };
 
   return (
     <div style={{ width: '100%' }}>
       <label className="label" style={{ marginBottom: '1rem', display: 'block', fontWeight: 800 }}>Multimedia del Producto</label>
-      
-      {error && (
-        <div style={{ padding: '0.75rem', background: '#fff5f5', border: '1px solid #feb2b2', borderRadius: '8px', color: '#c53030', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', fontSize: '0.875rem' }}>
-          <AlertCircle size={16} />
-          {error}
-        </div>
-      )}
 
       {/* ZONA DE ARRASTRE */}
       <div 

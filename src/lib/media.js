@@ -10,6 +10,7 @@ const ensureUploadDir = async () => {
   try {
     await fs.access(UPLOAD_DIR);
   } catch {
+    console.log(`[MEDIA]: Creando directorio de subidas en ${UPLOAD_DIR}`);
     await fs.mkdir(UPLOAD_DIR, { recursive: true });
   }
 };
@@ -18,24 +19,29 @@ const ensureUploadDir = async () => {
  * Procesa una imagen: redimensiona, convierte a WebP y optimiza.
  */
 export async function processImage(buffer) {
-  await ensureUploadDir();
-  
-  const filename = `${uuidv4()}.webp`;
-  const filepath = path.join(UPLOAD_DIR, filename);
-  const relativeUrl = `/uploads/products/${filename}`;
+  try {
+    await ensureUploadDir();
+    
+    const filename = `${uuidv4()}.webp`;
+    const filepath = path.join(UPLOAD_DIR, filename);
+    const relativeUrl = `/uploads/products/${filename}`;
 
-  await sharp(buffer)
-    .resize(1200, 1200, {
-      fit: 'inside',
-      withoutEnlargement: true
-    })
-    .webp({ quality: 80, effort: 6 })
-    .toFile(filepath);
+    console.log(`[MEDIA]: Procesando imagen... Destino: ${filepath}`);
 
-  return {
-    url: relativeUrl,
-    filename: filename
-  };
+    await sharp(buffer)
+      .resize(1200, 1200, {
+        fit: 'inside',
+        withoutEnlargement: true
+      })
+      .webp({ quality: 80, effort: 6 })
+      .toFile(filepath);
+
+    console.log(`[MEDIA]: Imagen procesada con éxito: ${relativeUrl}`);
+    return { url: relativeUrl, filename };
+  } catch (error) {
+    console.error(`[MEDIA ERROR]: Falló el procesamiento de imagen: ${error.message}`);
+    throw error;
+  }
 }
 
 /**
