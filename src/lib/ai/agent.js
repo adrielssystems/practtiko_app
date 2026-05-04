@@ -152,10 +152,11 @@ FALLBACK: ${inventory.isFallback ? "TRUE" : "FALSE"}
     ]);
     return response.content;
   } catch (error) {
-    console.error("Gemini Error:", error);
-    // Fallback manual si falla la API
+    console.error("DEBUG - Gemini Error:", error.message);
+    // Fallback manual si falla la API (Muy importante para no dejar al cliente mudo)
     const locationText = isMargarita ? "\n🚚 Envío gratis en Margarita." : "\n📦 Envíos nacionales: 0424-8948664.";
-    return `${inventory.text}\n${locationText}\n\n📸 Ver más: www.bit.ly/CatalogoPractiiko`;
+    const list = inventory.text || "Visita nuestro catálogo para ver modelos y precios.";
+    return `¡Hola ${customerName}! 👋 (Mód. Estático) 💎\n\n${list}\n${locationText}\n\n📸 Ver más: www.bit.ly/CatalogoPractiiko`;
   }
 }
 
@@ -167,12 +168,13 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
     const intent = detectIntent(message);
 
     // RESPUESTAS RÁPIDAS
-    if (intent === "OTHER") {
-      return "¡Con gusto! 💎 ¿Buscas sofás o colchones?";
-    }
-
-    if (intent === "GREETING") {
-      return `¡Hola ${customerName}! 👋 Bienvenido a Practiiko 💎\n\n¿Buscas sofás o colchones?`;
+    // GESTIÓN DE INTENCIONES ESPECIALES (No cortocircuitamos, dejamos que Gemini les de forma)
+    let currentIntent = intent;
+    if (intent === "LOCATION_UPDATE") currentIntent = "CATALOG";
+    
+    // Si es un saludo o no hay intención clara, forzamos catálogo para que Gemini tenga algo que mostrar
+    if (intent === "GREETING" || intent === "OTHER") {
+      currentIntent = "CATALOG";
     }
 
     // historial
@@ -196,11 +198,18 @@ export async function processChatMessage(message, sessionId, source = 'dm', comm
     if (intent === "LOCATION_UPDATE") currentIntent = "CATALOG";
 
     const term = extractKeyword(message);
-
     const inventory = await getInventory(term, currentIntent, location);
 
-    if (!inventory.found) {
-      return `No encontré ese modelo 💎\n\nMira el catálogo completo:\nwww.bit.ly/CatalogoPractiiko`;
+    // Si no hay inventario y no es un saludo, damos respuesta de fallback
+    if (!inventory.found && intent !== "GREETING" && intent !== "OTHER") {
+      const noProdMsg = `No encontré ese modelo exacto 💎\n\nPero puedes ver todo nuestro catálogo aquí:\nwww.bit.ly/CatalogoPractiiko`;
+      
+      if (source === 'whatsapp') {
+        await query(`INSERT INTO whatsapp_messages (session_id, message) VALUES ($1, $2)`, [sessionId, JSON.stringify({ role: 'assistant', content: noProdMsg })]);
+      } else {
+        await query(`INSERT INTO instagram_messages (session_id, message, source, comment_id) VALUES ($1, $2, $3, $4)`, [sessionId, JSON.stringify({ role: 'assistant', content: noProdMsg }), source, commentId]);
+      }
+      return noProdMsg;
     }
 
     const response = await buildResponse(message, customerName, inventory, location);

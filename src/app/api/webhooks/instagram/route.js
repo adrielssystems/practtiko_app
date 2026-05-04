@@ -66,6 +66,12 @@ export async function POST(req) {
                 );
               }
 
+              // 0. GUARDAR MENSAJE DEL USUARIO INMEDIATAMENTE
+              await query(
+                `INSERT INTO instagram_messages (session_id, message, source) VALUES ($1, $2, $3)`,
+                [senderId, JSON.stringify({ role: 'user', content: userMessage }), 'dm']
+              );
+
               // 1. Verificar Breaker Global
               const globalRes = await query("SELECT value FROM app_settings WHERE key = 'global_bot_enabled'");
               const isGlobalEnabled = globalRes.rows.length > 0 ? globalRes.rows[0].value === 'true' : true;
@@ -117,11 +123,17 @@ export async function POST(req) {
               console.log(`[INSTAGRAM COMMENT] Nuevo de @${username} en ${commentId}: ${userMessage}`);
 
               // Guardar cliente
-              query(
+              await query(
                 `INSERT INTO instagram_customers (id, username, full_name, last_seen) 
                  VALUES ($1, $2, $3, NOW()) 
                  ON CONFLICT (id) DO UPDATE SET username = $2, full_name = $3, last_seen = NOW()`,
                 [senderId, username, username]
+              );
+
+              // 0. GUARDAR MENSAJE DEL USUARIO INMEDIATAMENTE
+              await query(
+                `INSERT INTO instagram_messages (session_id, message, source, comment_id) VALUES ($1, $2, $3, $4)`,
+                [senderId, JSON.stringify({ role: 'user', content: userMessage }), 'comment', commentId]
               );
 
               // Verificar Breaker Global
