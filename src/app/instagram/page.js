@@ -17,7 +17,6 @@ async function getConversations() {
         MAX(created_at) as last_message,
         COUNT(*) as total_messages,
         (SELECT full_name FROM instagram_customers WHERE id = session_id LIMIT 1) as full_name,
-        (SELECT ai_enabled FROM instagram_customers WHERE id = session_id LIMIT 1) as ai_enabled,
         (SELECT source FROM instagram_messages m2 WHERE m2.session_id = instagram_messages.session_id ORDER BY created_at DESC LIMIT 1) as latest_source
       FROM instagram_messages
       WHERE session_id != 'practiiko'
