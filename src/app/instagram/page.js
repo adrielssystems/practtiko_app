@@ -61,8 +61,7 @@ export default async function InstagramMonitoringPage() {
           </div>
         ) : (
           conversations.map((conv) => (
-            <Link key={conv.session_id} href={`/instagram/${conv.session_id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-              <div className="card glass conversation-card" style={{ 
+            <div key={conv.session_id} className="card glass conversation-card" style={{ 
                 padding: '1.5rem', 
                 borderRadius: '20px',
                 display: 'flex',
@@ -71,10 +70,11 @@ export default async function InstagramMonitoringPage() {
                 transition: 'all 0.3s ease',
                 background: 'white',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-                border: '1px solid #f0f0f0'
+                border: '1px solid #f0f0f0',
+                position: 'relative'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, overflow: 'hidden' }}>
+                  <Link href={`/instagram/${conv.session_id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, overflow: 'hidden' }}>
                     <div style={{ 
                       width: '48px', 
                       height: '48px', 
@@ -104,7 +104,7 @@ export default async function InstagramMonitoringPage() {
                         <Clock size={12} /> {conv.last_message_fmt}
                       </div>
                     </div>
-                  </div>
+                  </Link>
 
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem', flexShrink: 0 }}>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -130,7 +130,8 @@ export default async function InstagramMonitoringPage() {
                   </div>
                 </div>
                 
-                <div style={{ 
+                <Link href={`/instagram/${conv.session_id}`} style={{ 
+                  textDecoration: 'none',
                   marginTop: '0.5rem',
                   paddingTop: '1rem',
                   borderTop: '1px solid #f5f5f5',
@@ -143,9 +144,8 @@ export default async function InstagramMonitoringPage() {
                 }}>
                   Ver conversación completa
                   <ChevronRight size={18} />
-                </div>
+                </Link>
               </div>
-            </Link>
           ))
         )}
       </div>
