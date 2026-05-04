@@ -16,9 +16,14 @@ const productsTool = new DynamicStructuredTool({
   func: async function({ query: searchTerm }) {
     console.log(`[DB QUERY] Buscando en catálogo: ${searchTerm}`);
     try {
+      // Limpiar el término de búsqueda para mejorar coincidencias (ej: Colchones -> Colchon)
+      let cleanSearch = searchTerm.trim().toLowerCase();
+      if (cleanSearch.endsWith('es')) cleanSearch = cleanSearch.slice(0, -2);
+      else if (cleanSearch.endsWith('s')) cleanSearch = cleanSearch.slice(0, -1);
+
       const res = await query(
-        "SELECT name, description, price_bcv, price_cash, status FROM products WHERE (name ILIKE $1 OR description ILIKE $1) AND status = 'active' LIMIT 8",
-        [`%${searchTerm}%`]
+        "SELECT name, description, price_bcv, price_cash, status FROM products WHERE (name ILIKE $1 OR description ILIKE $1 OR name ILIKE $2 OR description ILIKE $2) AND status = 'active' LIMIT 8",
+        [`%${searchTerm}%`, `%${cleanSearch}%`]
       );
       return JSON.stringify(res.rows);
     } catch (e) {
@@ -63,10 +68,11 @@ REGLAS DE PRECIOS Y UBICACIÓN:
 
 PROTOCOLO DE VERDAD ABSOLUTA (DB):
 1. ANTES de responder sobre cualquier sofá, colchón, precio o característica, DEBES usar la herramienta 'consultar_productos'.
-2. Si el cliente menciona un código (ej. D001, D006), úsalo como término de búsqueda exacto en la herramienta.
-3. Si el cliente pide algo por "puestos" (ej. "de dos puestos"), busca "sofa" o "dos asientos" en la herramienta para ver qué hay disponible realmente.
-4. PROHIBIDO hablar de memoria. La base de datos manda. Si la DB dice "Individual", el mueble es para 1 persona, sin importar lo que tú creas.
-5. Si no encuentras resultados en la DB, dile al cliente: "No ubico ese modelo exacto en mi inventario actual, pero tengo estos otros disponibles..." y muestra lo que sí encontraste.
+2. PROHIBIDO NARRAR LA BÚSQUEDA: No digas "Un momento", "Déjame consultar" o "Buscando en la base de datos". El cliente no debe saber que estás usando una herramienta. Solo da la respuesta final.
+3. Si el cliente menciona un código (ej. D001, D006), úsalo como término de búsqueda exacto en la herramienta.
+4. Si el cliente pide algo por "puestos" (ej. "de dos puestos"), busca "sofa" o "dos asientos" en la herramienta para ver qué hay disponible realmente.
+5. PROHIBIDO hablar de memoria. La base de datos manda. Si la DB dice "Individual", el mueble es para 1 persona, sin importar lo que tú creas.
+6. Si no encuentras resultados en la DB, dile al cliente: "No ubico ese modelo exacto en mi inventario actual, pero tengo estos otros disponibles..." y muestra lo que sí encontraste.
 
 GUÍA DE MODELOS (Solo como referencia para búsquedas):
 - 2 Puestos: Busca "dos asientos" o "Caterpilar", "Merey", "Nube".
