@@ -59,7 +59,9 @@ export default async function InstagramMonitoringPage() {
             <h3>No hay conversaciones activas</h3>
             <p style={{ color: 'var(--muted-foreground)' }}>Las charlas de Instagram aparecerán aquí una vez que el Webhook esté configurado.</p>
           </div>
-        ) :             <div key={conv.session_id} className="card glass conversation-card" style={{ 
+        ) : (
+          conversations.map((conv) => (
+            <div key={conv.session_id} className="card glass conversation-card" style={{ 
                 padding: '1.5rem', 
                 borderRadius: '20px',
                 display: 'flex',
@@ -135,7 +137,7 @@ export default async function InstagramMonitoringPage() {
                   {conv.latest_source === 'dm' && (
                     <span style={{ fontSize: '0.6rem', background: 'var(--primary)', color: 'white', padding: '2px 8px', borderRadius: '6px', fontWeight: 800, textTransform: 'uppercase' }}>Mensaje</span>
                   )}
-                </div>iv>
+                </div>
                 
                 <Link href={`/instagram/${conv.session_id}`} style={{ 
                   textDecoration: 'none',
