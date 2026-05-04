@@ -105,7 +105,6 @@ export default async function WhatsAppPage() {
                   </Link>
 
                   <div 
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                     style={{ 
                       display: 'flex', 
                       flexDirection: 'column', 
