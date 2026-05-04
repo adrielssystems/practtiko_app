@@ -14,6 +14,9 @@ export async function GET() {
 export async function POST(req) {
   try {
     const { enabled } = await req.json();
+    
+    console.log(`[SISTEMA] 🚨 CAMBIO DE BREAKER GLOBAL: ${enabled ? 'ACTIVADO (IA OPERATIVA)' : 'DESACTIVADO (IA EN PAUSA)'}`);
+
     await query(`
       INSERT INTO app_settings (key, value) 
       VALUES ('global_bot_enabled', $1) 
