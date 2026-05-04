@@ -3,7 +3,7 @@ import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { query } from "../db.js";
 
 const model = new ChatOpenAI({
-  openAIApiKey: process.env.DEEPSEEK_API_KEY,
+  openAIApiKey: process.env.DEEPSEEK_API_KEY || "dummy_key_for_build_only",
   configuration: { baseURL: process.env.DEEPSEEK_API_URL || "https://api.deepseek.com" },
   modelName: "deepseek-chat",
   temperature: 0,
